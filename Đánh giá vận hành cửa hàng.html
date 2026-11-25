@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đánh giá vận hành cửa hàng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: sổ hồ sơ nội bộ của phòng QC – gọn, rõ, việc cần làm hiện trước.
+   IDEA: tủ hồ sơ – mỗi tháng một ngăn, trong ngăn có sẵn phiếu trống và các phiếu đã chấm; phiếu chưa ký đủ bị kẹp cờ.
+   PICTURE: danh sách phiếu của ngăn đang mở; mở phiếu là thấy nguyên biểu mẫu chấm điểm.
+   COLOUR+TYPE: xanh ô liu như biểu mẫu QC, đỏ/cam chỉ cho cảnh báo; Be Vietnam Pro.
+   LAYOUT: cột ngăn tháng bên trái, nội dung bên phải; điện thoại: ngăn thành hàng cuộn ngang. */
+:root{color-scheme:light dark;
+--bg:light-dark(#f5f4ef,#121410);--card:light-dark(#fff,#1b1e17);--ink:light-dark(#1f2328,#e9eadf);--muted:light-dark(#6b6f68,#9da196);--line:light-dark(#e2e0d8,#2e3228);
+--brand:light-dark(#3d4a2a,#b7c98f);--brand-soft:light-dark(#eef1e6,#252b1c);--brand-ink:light-dark(#fff,#141810);
+--ok:light-dark(#1f7a4d,#5cc893);--ok-soft:light-dark(#e3f3ea,#163223);
+--bad:light-dark(#b42318,#ff7a6b);--bad-soft:light-dark(#fdecea,#3a1a16);
+--warn:light-dark(#b54708,#f3a64b);--warn-soft:light-dark(#fff4e5,#352510);
+--na:light-dark(#7d817a,#8a8e84);--na-soft:light-dark(#eeeeec,#2a2d27);--cct:light-dark(#d97706,#f0a43a);--on:light-dark(#fff,#10130d)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Be Vietnam Pro",system-ui,sans-serif;overflow-x:clip}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+.app{min-height:100vh}
+#side{background:var(--card);border-right:1px solid var(--line);padding:20px 12px;position:sticky;top:0;height:100vh;overflow:auto}
+.logo{font-weight:800;color:var(--brand);font-size:17px;padding:0 10px 2px}
+.logo-sub{color:var(--muted);font-size:13px;padding:0 10px 16px}
+.fold{display:flex;align-items:center;gap:10px;width:100%;border-radius:8px;padding:9px 10px;min-height:42px;text-decoration:none}
+.fold:hover{background:var(--brand-soft)}
+.fold.on{background:var(--brand);color:var(--brand-ink)}
+.fold svg{flex:none;width:18px;height:18px}
+.fold .nm{flex:1;font-weight:600}
+.fold .n{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.fold.on .n{color:inherit;opacity:.8}
+.flag{font-size:11.5px;font-weight:700;background:var(--bad);color:var(--on);border-radius:10px;padding:1px 7px;font-variant-numeric:tabular-nums}
+.flag.w{background:var(--warn)}
+.yr{font-size:12.5px;color:var(--muted);font-weight:600;padding:16px 10px 6px}
+.sleg{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--muted);padding:18px 10px 0;border-top:1px solid var(--line);margin-top:16px}
+main{min-height:70vh;padding-bottom:100px}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);width:100%}
+.page{padding-top:22px}
+h1{font-size:clamp(26px,3.2vw,36px);line-height:1.1;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin-top:6px}
+.status{margin-top:10px;font-size:13px;color:var(--muted)}
+.status.err{color:var(--bad)}
+.alert{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:16px;padding:14px 18px;border-radius:12px;background:var(--bad-soft);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent)}
+.alert.w{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+.alert.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+.alert b{font-size:16px}.alert .txt{flex:1}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:9px 14px;font-weight:600;cursor:pointer;min-height:42px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sm{min-height:34px;padding:5px 10px;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .l{font-size:13px;color:var(--muted)}
+.kpi .v{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2;margin-top:2px}
+.kpi .d{font-size:12.5px;color:var(--muted)}
+.kpi.bad .v{color:var(--bad)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px}
+.newcard{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:16px;padding:16px 18px;border:2px dashed color-mix(in srgb,var(--brand) 45%,var(--line));border-radius:12px;background:var(--brand-soft);text-decoration:none}
+.newcard:hover{border-color:var(--brand)}
+.newcard .ic{width:46px;height:56px;border-radius:6px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-size:24px;color:var(--brand);font-weight:300;flex:none}
+.newcard .tx{flex:1}.newcard b{font-size:16px}.newcard .m{color:var(--muted);font-size:13.5px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tools input,.tools select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:9px 12px;font-size:16px;min-height:42px}
+.tools input{flex:1;min-width:180px}
+input:focus-visible,select:focus-visible,button:focus-visible,textarea:focus-visible,a:focus-visible,tr:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+.list th{font-size:12.5px;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.list td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.list tbody tr{cursor:pointer}
+.list tbody tr:hover td{background:var(--brand-soft)}
+.list tr.late td:first-child{box-shadow:inset 3px 0 var(--bad)}
+.list tr.wait td:first-child{box-shadow:inset 3px 0 var(--warn)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.code{font-weight:700;white-space:nowrap}
+.st{font-weight:600}.ar{font-size:12.5px;color:var(--muted)}
+.rate{display:inline-block;font-size:12px;font-weight:800;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.r-KD{background:var(--bad-soft);color:var(--bad)}.r-CCT{background:var(--warn-soft);color:var(--warn)}.r-DAT{background:var(--ok-soft);color:var(--ok)}.r-VYC{background:var(--ok);color:var(--on)}.r-none{background:var(--na-soft);color:var(--muted)}
+.ccpn{color:var(--bad);font-weight:700}
+.dots{display:inline-flex;gap:4px;vertical-align:middle;margin-right:6px}
+.dots i{width:10px;height:10px;border-radius:50%;border:2px solid var(--na)}
+.dots i.y{background:var(--ok);border-color:var(--ok)}
+.chip{font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.c-ok{color:var(--ok)}.c-wait{background:var(--warn-soft);color:var(--warn)}.c-late{background:var(--bad-soft);color:var(--bad)}.c-draft{background:var(--na-soft);color:var(--muted)}
+.empty{padding:36px;text-align:center;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted);margin-top:14px}
+
+/* ---- form view ---- */
+.crumb{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.crumb a{font-weight:600;color:var(--brand);text-decoration:none}
+.crumb a:hover{text-decoration:underline}
+.tabs{display:flex;gap:6px;margin:14px 0;border-bottom:1px solid var(--line)}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 16px;font-weight:600;color:var(--muted);margin-bottom:-1px;cursor:pointer;min-height:44px}
+.tab:hover{color:var(--ink)}.tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+.cnt{font-size:11px;background:var(--na-soft);color:var(--muted);padding:1px 7px;border-radius:10px;margin-left:4px}
+.cnt.full{background:var(--ok-soft);color:var(--ok)}
+.doc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+.doc h2{font-size:19px;margin:0 0 4px;color:var(--brand)}
+.meta{color:var(--muted);font-size:13px}
+.info{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.4fr;gap:12px;margin-top:16px}
+.info label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+.info input,.gen textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:16px}
+.info input:disabled,.gen textarea:disabled{background:var(--na-soft)}
+.legend{margin-top:14px;display:flex;flex-wrap:wrap;gap:16px;font-size:12.5px;color:var(--muted)}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:4px;vertical-align:1px}
+.tag.kph{background:var(--na-soft);color:var(--muted)}
+.tag.crt{background:var(--bad-soft);color:var(--bad)}
+.lock{margin-top:12px}
+.part-title{font-size:13px;font-weight:700;color:var(--brand);margin:22px 4px 10px}
+section.grp{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden}
+.grp-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 18px;background:var(--brand-soft);border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+.grp-h h3{margin:0;font-size:15px}
+.grp-h .stat{font-size:12.5px;color:var(--muted);display:flex;gap:14px;white-space:nowrap}
+.grp-h .stat b{color:var(--ink)}
+.chev{transition:transform .15s;display:inline-block}
+section.collapsed .chev{transform:rotate(-90deg)}
+section.collapsed .grp-b{display:none}
+table.items th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:8px 12px;border-bottom:1px solid var(--line)}
+table.items th.c{text-align:center;width:70px}
+table.items td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.items tr:last-child td{border-bottom:0}
+td.icode{font-weight:700;white-space:nowrap;width:66px}
+td.crit{width:20%;font-weight:500}
+td.pts{text-align:center;width:66px;font-weight:700;font-variant-numeric:tabular-nums;border-left:1px solid var(--line);vertical-align:middle!important}
+.errs{display:flex;flex-direction:column;gap:3px}
+.err{font-size:13px;padding:1px 4px 1px 14px;position:relative}
+.err::before{content:"•";position:absolute;left:3px;color:var(--muted)}
+.inote{width:100%;margin-top:6px;border:1px dashed var(--line);border-radius:6px;padding:5px 8px;font-size:13px;resize:vertical;min-height:30px;background:transparent}
+td.opt{width:70px;text-align:center;cursor:pointer;border-left:1px solid var(--line);vertical-align:middle!important;font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+td.opt .box{display:inline-flex;align-items:center;justify-content:center;width:36px;height:32px;border:1.5px dashed color-mix(in srgb,var(--muted) 55%,transparent);border-radius:7px;color:var(--on)}
+td.opt:hover .box{border-color:var(--brand)}
+td.o-D.on{background:var(--ok-soft)}td.o-D.on .box{background:var(--ok);border:0}
+td.o-K.on{background:var(--bad-soft)}td.o-K.on .box{background:var(--bad);border:0}
+td.o-NA.on{background:var(--na-soft)}td.o-NA.on .box{background:var(--na);border:0}
+.ro td.opt{cursor:default}.ro td.opt:not(.on) .box{opacity:.35}
+tr.st-D td.icode{box-shadow:inset 3px 0 var(--ok)}tr.st-K td.icode{box-shadow:inset 3px 0 var(--bad)}tr.st-NA td.icode{box-shadow:inset 3px 0 var(--na)}
+tr.ccprow td{background:color-mix(in srgb,var(--bad-soft) 45%,var(--card))}
+tr.ccprow td.icode{color:var(--bad)}
+.sum{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+.sum th,.sum td{border:1px solid var(--line);padding:7px 10px;text-align:right}
+.sum th{font-size:12px;color:var(--muted);font-weight:600}
+.sum td:first-child,.sum th:first-child{text-align:left}
+.sum tr.total td{font-weight:700;background:var(--brand-soft)}
+.scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:12.5px;text-align:center}
+.scale div{padding:8px;border-right:1px solid var(--line)}.scale div:last-child{border-right:0}
+.scale b{display:block;font-size:15px}
+.scale .act{outline:2px solid var(--brand);outline-offset:-2px;background:var(--brand-soft)}
+.gen{margin-top:14px}.gen textarea{min-height:70px}
+table.appr{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:14px}
+table.appr th,table.appr td{border:1px solid var(--line);padding:8px 10px;vertical-align:middle}
+table.appr th{background:var(--brand-soft);font-size:13px;text-align:center}
+table.appr th:first-child,table.appr td.lbl{width:100px;font-weight:600;color:var(--muted);font-size:12.5px}
+table.appr input{width:100%;border:1px solid transparent;border-radius:6px;padding:7px 8px;text-align:center;background:var(--bg);font-size:15px}
+table.appr input:disabled{opacity:1;background:transparent}
+tr.sig td{text-align:center;vertical-align:top!important;padding:12px}
+.tick{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:var(--muted);background:none;border:0;padding:4px;min-height:44px}
+.tick .tb{width:26px;height:26px;border:2px solid var(--na);border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;color:var(--on)}
+.tick:hover .tb{border-color:var(--brand)}
+.tick.on .tb{background:var(--ok);border-color:var(--ok)}.tick.on .tb::after{content:"✓"}
+.tick.on .tt{color:var(--ok)}
+.sigform{margin-top:8px}
+.sigform input{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;font-size:16px;background:var(--card)}
+.sigbtns{display:flex;gap:6px;margin-top:6px;justify-content:center;flex-wrap:wrap}
+.sigmsg{font-size:12.5px;color:var(--bad);margin-top:4px}
+.sigtime{font-size:12px;color:var(--muted);margin-top:4px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.06);z-index:15}
+.bar .in{max-width:1240px;margin:0 auto;padding:10px clamp(16px,3vw,36px);display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.bk{display:flex;flex-direction:column}
+.bk span{font-size:11.5px;color:var(--muted)}
+.bk b{font-size:18px;font-variant-numeric:tabular-nums}
+.prog{flex:1;min-width:140px;font-size:12.5px;color:var(--muted)}
+.prog .track{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px}
+.prog .fill{height:100%;background:var(--brand)}
+.saved{font-size:12.5px;color:var(--muted)}
+.saved.dirty{color:var(--warn);font-weight:600}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.info{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){
+ .app{grid-template-columns:minmax(0,1fr)}
+ #side{position:sticky;top:0;height:auto;z-index:20;padding:8px 10px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+ #folders{display:flex;gap:6px}
+ .logo,.logo-sub,.yr,.sleg{display:none}
+ .fold{width:auto;flex:none;white-space:nowrap}.fold svg{display:none}
+ .bar{left:0}
+ .bar .in{gap:10px 16px;padding:8px 14px}.bar .prog,.bar .saved{display:none}.bk b{font-size:16px}
+ #bSave{margin-left:auto}
+ .alert .txt{flex-basis:100%}
+ .newcard .ic{display:none}.newcard .btn{width:100%;justify-content:center}.newcard .tx{flex-basis:100%}
+ table.items thead{display:none}
+ table.items tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line)}
+ table.items td{border:0;width:auto!important}
+ td.icode{grid-column:1/2}td.crit{grid-column:2/-1}td.errcell{grid-column:1/-1;padding-top:0}
+ td.pts::before,td.opt::before{display:block;font-size:10.5px;color:var(--muted);font-weight:500}
+ td.pts::before{content:"Chuẩn"}td.o-D::before{content:"Đạt"}td.o-K::before{content:"Không đạt"}td.o-NA::before{content:"NA"}
+ table.appr th:first-child,table.appr td.lbl{width:70px}
+}
+@media(max-width:600px){.list{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding:10px 0 10px 10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0!important;padding:3px 0;padding-inline-start:8em;text-align:start;box-shadow:none!important}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;color:var(--muted)}.stack td:empty{display:none}.list tr.late{box-shadow:inset 3px 0 var(--bad)}.list tr.wait{box-shadow:inset 3px 0 var(--warn)}
+ .info{grid-template-columns:1fr}.scale{grid-template-columns:1fr 1fr}}
+
+.top{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.filters{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:18px;display:grid;gap:10px}
+.frow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.flab{font-size:13px;font-weight:700;color:var(--muted);width:76px;flex:none}
+.filters select,.filters input{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 12px;font-size:16px;min-height:42px}
+.filters #q{flex:1;min-width:200px}
+.dl{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card)}
+.seg button{border:0;border-right:1px solid var(--line);background:none;padding:0 14px;min-height:42px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--brand);color:var(--brand-ink)}
+.ptitle{font-size:22px;margin:26px 0 0}
+.list td.code a{color:var(--brand);text-decoration:none}.list td.code a:hover{text-decoration:underline}
+@media(max-width:600px){.flab{width:100%}.top .btn{width:100%;justify-content:center}.frow>select,.frow>.seg{width:100%}.seg button{flex:1;white-space:nowrap;padding:0 6px;font-size:14px}.dl{flex:1}.dl input{flex:1}}
+
+/* ---- website shell ---- */
+header.site{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.hin{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.mark{width:38px;height:38px;border-radius:9px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-weight:800;font-size:14px;letter-spacing:.5px}
+.brand b{display:block;font-size:16px;line-height:1.2}.brand small{color:var(--muted);font-size:12.5px}
+#hnav{display:flex;gap:4px}
+#hnav a{text-decoration:none;font-weight:600;padding:10px 14px;border-radius:8px;color:var(--muted);display:inline-flex;gap:6px;align-items:center;min-height:42px}
+#hnav a:hover{color:var(--ink);background:var(--brand-soft)}
+#hnav a.on{color:var(--brand);background:var(--brand-soft)}
+footer.site{border-top:1px solid var(--line);padding:22px 0 90px;color:var(--muted);font-size:13px}
+.hero{background:var(--brand);color:var(--brand-ink);padding:44px 0 40px}
+.hero .eyebrow{margin:0 0 8px;font-weight:600;opacity:.8;font-size:14px}
+.hero h1{font-size:clamp(30px,4.4vw,48px);line-height:1.08;max-width:820px}
+.hero .lead{max-width:640px;font-size:17px;opacity:.88;margin:12px 0 22px}
+.hero-filter{background:var(--card);color:var(--ink);border-radius:12px;padding:12px 14px;display:inline-flex;max-width:100%}
+.hero .status{color:var(--brand-ink)}
+.tf{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tf select,.tf input{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 12px;font-size:16px;min-height:42px}
+.filters .tf #q{flex:1;min-width:200px}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:34px 0 14px}
+.sechead h2{font-size:24px;margin:0}
+.more{font-weight:600;color:var(--brand);text-decoration:none}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .15s,transform .15s}
+.card:hover{box-shadow:0 10px 30px rgba(0,0,0,.08);transform:translateY(-2px)}
+.cimg{background:var(--brand-soft);display:grid;place-items:center;padding:26px 0 0;height:170px;overflow:hidden;border-bottom:1px solid var(--line)}
+.paper{width:150px;height:170px;background:var(--card);border-radius:8px 8px 0 0;box-shadow:0 6px 18px rgba(0,0,0,.1);padding:34px 16px 0;position:relative}
+.paper .ptab{position:absolute;top:10px;left:16px;font-size:11px;font-weight:800;background:var(--brand);color:var(--brand-ink);padding:2px 7px;border-radius:4px}
+.paper i{display:block;height:6px;border-radius:3px;background:var(--line);margin-bottom:8px}.paper i.s{width:60%}
+.paper .grid{display:grid;grid-template-columns:1fr 18px 18px;gap:5px;margin-top:10px}
+.paper .grid b{height:10px;border-radius:2px;background:var(--line)}.paper .grid b:nth-child(3n+2){background:var(--ok)}
+.cbody{padding:18px 20px 20px;display:flex;flex-direction:column;gap:8px;flex:1}
+.ccode{font-size:12.5px;font-weight:700;color:var(--brand)}
+.card h3{margin:0;font-size:20px;line-height:1.2}.card h3 a{text-decoration:none}.card h3 a:hover{text-decoration:underline}
+.cdesc{margin:0;color:var(--muted);font-size:14.5px}
+.cmeta{font-size:13px;color:var(--muted)}
+.cnote{margin-top:6px;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}
+.cnote .big b{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;margin-right:4px}
+.cov{font-size:14px}.cov .track{height:7px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:5px}.cov .track i{display:block;height:100%;background:var(--brand);border-radius:4px}
+.cwarn{font-size:13.5px;font-weight:700;color:var(--bad);background:var(--bad-soft);padding:6px 10px;border-radius:8px}
+.cwarn.w{color:var(--warn);background:var(--warn-soft)}
+.cok{font-size:13.5px;font-weight:700;color:var(--ok)}.cmuted{font-size:13.5px;color:var(--muted)}
+.cact{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:8px}.cact .btn{flex:1;justify-content:center}
+.plist{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.plist li+li{border-top:1px solid var(--line)}
+.plist a{display:flex;gap:14px;align-items:center;padding:12px 16px;text-decoration:none;min-height:56px}
+.plist a:hover{background:var(--brand-soft)}
+.pt{font-size:11.5px;font-weight:800;background:var(--brand-soft);color:var(--brand);padding:3px 8px;border-radius:5px;white-space:nowrap;min-width:64px;text-align:center}
+.pn{flex:1;display:flex;flex-direction:column}.pn span{font-size:13px;color:var(--muted)}
+.top .paper{width:64px;height:76px;padding:22px 8px 0;flex:none;border-radius:6px;box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.top .paper .ptab{font-size:9px;top:6px;left:8px;padding:1px 4px}.top .paper i{height:4px;margin-bottom:5px}.top .paper .grid{display:none}
+.top{align-items:center}.top .tt{flex:1}
+.summary-line{margin-top:18px;font-size:15px}
+.crumb .meta{margin:0 2px}
+@media(max-width:900px){.cards{grid-template-columns:minmax(0,1fr)}.card{flex-direction:row}.cimg{width:180px;height:auto;flex:none;border-bottom:0;border-right:1px solid var(--line)}}
+@media(max-width:600px){.card{flex-direction:column}.cimg{width:auto;height:140px;border-right:0;border-bottom:1px solid var(--line)}.hero{padding:30px 0}.hero-filter{display:block}.tf .seg,.tf select{width:100%}.flab{width:100%}#hnav a{padding:8px 10px}.brand small{display:none}.top .paper{display:none}}
+
+.list tbody tr{position:relative}
+.rowlink::after{content:"";position:absolute;inset:0}
+.rowlink:focus-visible{outline:none}.list tr:has(.rowlink:focus-visible){outline:2px solid var(--brand);outline-offset:-2px}
+.nt{font-size:12px;opacity:.6}
+
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<div class="app">
+<header class="site"><div class="wrap hin">
+  <a class="brand" href="#"><span class="mark" aria-hidden="true">QC</span><span><b>Đánh giá vận hành cửa hàng</b><small>Phòng Kiểm soát chất lượng</small></span></a>
+  <nav id="hnav" aria-label="Điều hướng chính"><a href="#" data-r="home">Trang chủ</a><a href="#can-ky" data-r="need" id="navNeed">Phiếu cần ký</a></nav>
+</div></header>
+<main id="main"><div class="wrap page"><h1>Đang tải…</h1><div id="status" class="status"></div></div></main>
+<footer class="site"><div class="wrap">Biểu mẫu CCP.BM-02-KHBM, CCP.BM-03-CMR, CCP.BM-04-QC · ban hành 28/06/2026. Các phiếu từ tháng 7 đến tháng 11/2026 là dữ liệu mẫu tạo giả để minh hoạ.</div></footer>
+<datalist id="storeList"></datalist>
+</div>
+<div class="bar" id="bar" hidden><div class="in">
+  <div class="bk"><span>% Đạt</span><b id="k-pct">–</b></div>
+  <div class="bk"><span>Thang điểm 5</span><b id="k-5">–</b></div>
+  <div class="bk"><span>Lỗi nghiêm trọng</span><b id="k-ccp">0</b></div>
+  <div class="bk"><span>Xếp loại</span><span class="rate r-none" id="k-rate">Chưa chấm</span></div>
+  <div class="prog"><span id="k-prog"></span><div class="track"><div class="fill" id="k-fill"></div></div></div>
+  <span class="saved" id="saved"></span>
+  <button class="btn primary" id="bSave" type="button" disabled>Lưu phiếu</button>
+</div></div>
+<div class="alert w" id="leave" hidden style="position:fixed;left:50%;transform:translateX(-50%);top:16px;z-index:40;max-width:min(560px,92vw);box-shadow:0 8px 30px rgba(0,0,0,.15)">
+  <div class="txt"><b>Phiếu có thay đổi chưa lưu</b><div>Lưu lại trước khi rời phiếu này?</div></div>
+  <button class="btn primary" id="lvSave" type="button">Lưu</button><button class="btn" id="lvDrop" type="button">Bỏ thay đổi</button><button class="btn" id="lvStay" type="button">Ở lại</button>
+</div>
+<script>
+{
+const DATA = [
+{id:"A1",part:"A",name:"Hạ tầng & hệ thống kỹ thuật",items:[
+ {id:"A1.1",name:"Hệ thống sàn, trần, tường, cửa, kính, vách ngăn",pts:1,errs:["A1.1.1-KPH: Trần tường bong tróc, nứt vỡ, thấm dột, sàn ẩm ướt","A1.1.2-KPH: Cửa kính, cửa ra vào không đảm bảo an toàn","A1.1.1: Xuống cấp nhưng không có kế hoạch sửa chữa trong thời gian tối đa 3 tháng"]},
+ {id:"A1.2",name:"Hệ thống âm thanh & wifi",pts:1,errs:["A1.2.1-KPH: Đường truyền wifi không đảm bảo","A1.2.1: Thiết bị hỏng nhưng không báo trên base request"]},
+ {id:"A1.3",name:"Hệ thống điện, chiếu sáng, làm mát,…",pts:1,errs:["A1.3.1-KPH: Có thiết bị điện bị hỏng","A1.3.1: Bóng đèn cháy không thay","A1.3.2: Hệ thống điện hỏng nhưng không có kế hoạch sửa trong thời gian tối đa 3 tháng"]},
+ {id:"A1.4",name:"Hệ cấp - thoát nước",pts:1,errs:["A1.4.1-KPH: Hệ cấp thoát nước hoạt động không tốt","A1.4.1: Hỏng không có kế hoạch sửa chữa","A1.4.2: Bẫy mỡ không đảm bảo công năng"]}
+],ccp:[]},
+{id:"A2",part:"A",name:"Nội thất, trang trí & nhận diện thương hiệu",items:[
+ {id:"A2.1",name:"Bảng - biển thương hiệu",pts:2,errs:["A2.1.1: Không bật đúng giờ quy định (từ 18h đối với mùa hè và 17h đối với mùa đông)","A2.1.1-KPH: Bị khuyết/vỡ/cháy bóng…"]},
+ {id:"A2.2",name:"Ô đúng tiêu chuẩn thương hiệu",pts:1,errs:["A2.2.1-KPH: Mờ logo/lỏng chân","A2.2.1: Ô rách không thay"]},
+ {id:"A2.3",name:"Hệ thống quầy, kệ, tủ",pts:1,errs:["A2.3.1-KPH: Xuống cấp, không đảm bảo công năng","A2.3.1: Xuống cấp nhưng không có kế hoạch sửa chữa trong thời gian tối đa 3 tháng"]},
+ {id:"A2.4",name:"Bàn ghế",pts:2,errs:["A2.4.1: Bàn ghế gãy, lung lay không đảm bảo an toàn","A2.4.2: Vỏ đệm rách/sờn/mất thẩm mỹ/sai tiêu chuẩn","A4.2.1-KPH: Bàn ghế tróc sơn, han gỉ","A2.4.2-KPH: Bàn ghế cập kênh","A2.4.2-KPH: Bàn ghế gia cố lộ ke không đảm bảo thẩm mĩ"]},
+ {id:"A2.5",name:"Vật dụng trang trí, rèm",pts:0,errs:["A2.5.1-KPH: Khung tranh, tranh ảnh trang trí cũ/rách/mờ/bong tróc/không rõ hình","A2.5.2-KPH: Sắp xếp không đúng vị trí","A2.5.3-KPH: Rèm rách/cũ/bạc màu","A2.5.4-KPH: Cửa hàng không thực hiện tháo dỡ các đồ trang trí theo dịp khi hết chương trình","A2.5.5-KPH: Dán các loại poster cổ động, các loại sticker trong cửa hàng"]},
+ {id:"A2.6",name:"Cây cảnh, lọ hoa",pts:1,errs:["A2.6.1-KPH: Lọ hoa không đúng tiêu chuẩn","A2.6.2-KPH: Chậu cây nhựa (không áp dụng với các chậu cây dạng treo)","A2.6.1: Cây héo, lá vàng úa, cây chết","A2.6.2: Chậu cây, lọ hoa nứt/vỡ"]}
+],ccp:[["CCP01","Sử dụng Ô không phải Ô thương hiệu Cộng."],["CCP02","CH bổ sung đồ nội thất không phải của thương hiệu"],["CCP04","Nhiều bàn ghế, vỏ đệm hỏng cùng 1 lúc (≥ 20% tổng số lượng đã bày)"]]},
+{id:"A3",part:"A",name:"Trang thiết bị & công cụ dụng cụ",items:[
+ {id:"A3.1",name:"Thiết bị, CCDC bán hàng",pts:1,errs:["A3.1.1: Máy POS, máy in không hoạt động tốt","A3.1.2: Có từ 05 thẻ rung không hoạt động/cờ số bong tróc, không rõ số","A3.1.3: Menu, POSM bong tróc/gãy gập, cũ, sờn màu, gãy khung","A3.1.4: Sử dụng bộ khung menu, POSM ngoài tiêu chuẩn"]},
+ {id:"A3.2",name:"CCDC phục vụ khách hàng",pts:1,errs:["A3.2.1: Khay bê đồ nứt vỡ/sờn cũ không đảm bảo hình ảnh","A3.2.2: Cốc, chén, đĩa, thìa, ống hút,… sứt mẻ, biến dạng, mờ logo không đảm bảo hình ảnh"]},
+ {id:"A3.3",name:"Thiết bị/CCDC bảo quản",pts:2,errs:["A3.3.1-KPH: Tủ bảo quản không đảm bảo nhiệt độ (>10 độ trong giờ cao điểm và >8 độ ngoài giờ cao điểm; tủ đông > 0 độ)","A3.3.2-KPH: Tủ bảo quản đá bị rò rỉ, nước chảy ra sàn","A3.3.1: CCDC bảo quản nứt, vỡ, rò rỉ, ố bẩn lâu ngày không có khả năng vệ sinh","A3.3.2: Thiết bị/CCDC bảo quản không đúng tiêu chuẩn"]},
+ {id:"A3.4",name:"Thiết bị/CCDC pha chế",pts:2,errs:["A3.4.1: Thiết bị/CCDC nứt/vỡ/lỏng lẻo không đảm bảo an toàn vận hành","A3.4.2: Thiết bị/CCDC không đảm bảo thông số vận hành: tốc độ vòng quay chậm, nhiệt độ không đạt,...","A3.4.3: Thiết bị/CCDC pha chế không đúng tiêu chuẩn"]},
+ {id:"A3.5",name:"Thiết bị/CCDC vệ sinh, thùng rác",pts:1,errs:["A3.5.1: Thiết bị/CCDC không đảm bảo công năng: nứt/vỡ/rách/chổi cùn/...","A3.5.2: Thiết bị/CCDC không đúng tiêu chuẩn Cộng"]}
+],ccp:[["CCP05","Ly, cốc, chén, đĩa, bát... nứt vỡ/sứt mẻ phục vụ khách hàng"],["CCP06","Tủ bảo quản không đảm bảo nhiệt độ yêu cầu làm hỏng thực phẩm, thực phẩm chảy nước, rã đông, biến màu, gây mùi."]]},
+{id:"B1",part:"B",name:"Tiêu chuẩn bảo vệ",items:[
+ {id:"B1.1",name:"Tác phong diện mạo bảo vệ",pts:2,errs:["B1.1.1: Không tuân thủ đồng phục/trang phục không gọn gàng/đi dép lê","B1.1.2: Bảo vệ ngồi/nằm/gác chân lên xe khách/ngủ trong giờ làm việc","B1.1.3: Có mùi rượu bia/mùi cơ thể khi làm việc","B1.1.4: Mặc đồng phục hút thuốc trong giờ làm việc","B1.1.5: Để vật dụng cá nhân không gọn gàng, không đúng nơi quy định"]},
+ {id:"B1.2",name:"Bảo vệ đón tiếp KH",pts:2,errs:["B1.1.1: Không hỗ trợ khách dắt xe khi khách cần/Không hướng dẫn khách khu vực để xe","B1.2.2: Không che yên xe cho khách khi trời nắng","B1.2.3: Có hành động, lời nói không thân thiện, không lịch sự gây khó chịu với khách hàng"]}
+],ccp:[["CCP07","Bảo vệ nói tục/chửi bậy/đánh cãi nhau, quát mắng/sàm sỡ/không tôn trọng khách hàng"]]},
+{id:"B2",part:"B",name:"Tiêu chuẩn nhân viên cửa hàng",items:[
+ {id:"B2.1",name:"Tác phong diện mạo",pts:3,errs:["B2.1.1: Không đầy đủ đồng phục, đồng phục không đảm bảo hình ảnh","B2.1.5: Có mùi rượu bia/mùi cơ thể/mùi nước hoa"]},
+ {id:"B2.2",name:"Đón tiếp & phục vụ khách hàng",pts:3,errs:["B2.2.1: Không hỗ trợ yêu cầu của khách hàng khi cần","B2.2.2: Thái độ không thân thiện, không lịch sự khi phục vụ khách"]},
+ {id:"B2.3",name:"Tuân thủ nội quy làm việc",pts:3,errs:["B2.3.1: Không tuân thủ quy tắc ăn ca","B2.3.2: Sử dụng điện thoại không vì mục đích công việc","B2.3.3: Tụ tập/làm việc riêng/nói to/gọi với/cười đùa"]}
+],ccp:[["CCP08","Nhân viên nói tục/chửi bậy/đánh cãi nhau, quát mắng/sàm sỡ/không tôn trọng khách hàng."],["CCP09","Nhân viên ngủ trong giờ làm việc"],["CCP10","Mặc đồng phục & hút thuốc trong giờ làm việc"]]},
+{id:"B3",part:"B",name:"Tiêu chuẩn bán hàng",items:[
+ {id:"B3.1",name:"Quy trình bán hàng",pts:3,errs:["B3.1.1: Thu ngân không có mặt tại quầy để khách phải gọi/chờ","B3.1.2: Không thực hiện \"CỘNG XIN CHÀO\" & \"CỘNG CẢM ƠN\"","B3.1.3: Không thực hiện bán hàng gia tăng","B3.1.4: Không nắm được thông tin sản phẩm/quy trình bán hàng để tư vấn/hỗ trợ khi khách hàng cần","B3.1.5: Không chủ động hỏi thông tin tích điểm cho khách hàng","B3.1.6: Không nhắc lại order"]},
+ {id:"B3.2",name:"Chương trình marketing",pts:3,errs:["B3.2.1: Trưng bày những ấn phẩm quảng cáo đã hết hạn","B3.2.2: Không trưng bày POSM trong thời gian diễn ra các chương trình Marketing","B3.2.3: Nhân viên không chủ động tư vấn/tư vấn sai các chương trình MKT đang áp dụng tới KH."]}
+],ccp:[["CCP11","Nhân viên thanh toán không in bill, không trả hóa đơn cho khách hàng, tích điểm không đúng tài khoản"],["CCP12","Menu/POSM chỉnh sửa: sai giá, dán che tên sản phẩm hoặc không đúng quy định, lỗi thời"]]},
+{id:"B4",part:"B",name:"Tiêu chuẩn pha chế",items:[
+ {id:"B4.1",name:"Ủ trà, cà phê",pts:2,errs:["B4.1.1: Thực hiện sai trình tự các bước","B4.1.2: Không cân định lượng nguyên liệu/cân sai định lượng","B4.1.3: Không đo nhiệt độ theo quy định","B4.1.4: Sai thời gian ủ theo quy định","B4.1.5: Sai thao tác pha chế"]},
+ {id:"B4.2",name:"Sơ chế trái cây, thạch, kem muối",pts:2,errs:["B4.2.1: Thực hiện sai trình tự các bước trong bộ công thức","B4.2.2: Không cân định lượng/cân sai định lượng","B4.2.3: Không đo nhiệt độ theo quy định","B4.2.4: Không đủ thời gian nấu theo quy định","B4.2.5: Sai thao tác","B4.2.6: Chia xuất không đủ định lượng"]},
+ {id:"B4.3",name:"Pha chế đồ uống",pts:2,errs:["B4.3.1: Pha chế đồ uống sai trình tự các bước","B4.3.2: Không cân đá/Không cân đong định lượng nguyên liệu pha chế/sai định lượng","B4.3.3: Không đo nhiệt độ theo quy định","B4.3.4: Sai thao tác pha chế"]},
+ {id:"B4.4",name:"Chế biến nhóm đồ ăn",pts:2,errs:["B4.4.1: Chế biến sai trình tự các bước","B4.4.2: Rã đông bánh sai thời gian/sai thời gian & nhiệt độ nướng"]}
+],ccp:[["CCP13","Sản phẩm chế biến chưa chín theo quy định"],["CCP14","Đồ uống thiếu từ 1 nguyên liệu chính hoặc sử dụng không đúng loại nguyên liệu"]]},
+{id:"B5",part:"B",name:"Tiêu chuẩn phục vụ",items:[
+ {id:"B5.1",name:"Công tác chuẩn bị giờ mở cửa/Dọn dẹp cửa hàng cuối ngày",pts:1,errs:["B5.1.1: Mở cửa hàng bán hàng muộn hơn quy định","B5.1.2: Đến giờ mở cửa nhưng chưa có khu vực/sản phẩm nào sẵn sàng phục vụ","B5.1.3: Mời khách hàng về trước giờ đóng cửa/mời khách hàng di chuyển vị trí mà không xin lỗi khách","B5.1.4: Dọn dẹp trước giờ đóng cửa vì lý do đặc biệt nhưng không xin phép khách"]},
+ {id:"B5.2",name:"Khu vực ra đồ, quầy tự phục vụ",pts:1,errs:["B5.2.1: Đặt trực tiếp thìa, ống hút không có bọc, giấy ăn trong lòng khay gỗ/khay sắt (Đặt vào cốc take hoặc cốc camen)","B5.2.2: Khu vực ra đồ thiếu CCDC (CCDC bắt buộc: ống hút phi 8, 12, ống hút đồ nóng, thìa inox ngắn và dài, lót cốc, nắp cốc take, túi đơn, túi đôi)","B5.2.3: Quầy tự phục vụ setup thiếu CCDC (CCDC bắt buộc: nước lọc, cốc uống nước, tăm, đường, ống hút, khăn giấy khô)."]},
+ {id:"B5.3",name:"Hoa tươi",pts:1,errs:["B5.3.1: <20% số bàn trong nhà được trưng bày hoa tươi (không áp dụng với bàn kích thước 40x40cm trở xuống)","B5.3.2: Hoa héo","B5.3.3: Lọ hoa không sạch, nước đục/có rêu/có mùi"]},
+ {id:"B5.4",name:"Nhạc",pts:1,errs:["B5.4.1: CH không bật nhạc trong giờ hoạt động"]},
+ {id:"B5.5",name:"Cách thức phục vụ đồ ăn/đồ uống",pts:3,errs:["B5.5.1: Không sử dụng khay khi phục vụ đồ uống cho khách","B5.5.2: Tay cầm sát miệng cốc (cách miệng tối thiểu 1cm)","B5.5.3: Không nói mời khách hoặc gọi tên đồ ăn/đồ uống","B5.5.4: Phục vụ chậm (thời gian KH nhận được đồ uống >8p tính từ lúc order xong)","B5.5.5: Thời gian ra đồ không đúng với thời gian hẹn khách (với trường hợp >8p)","B5.5.6: Đồ ăn chơi không được phục vụ trong thời gian chờ đồ uống."]},
+ {id:"B5.6",name:"Đồ ăn/uống phục vụ khách",pts:2,errs:["B5.6.1: Ra đồ không đúng sản phẩm khách Order","B5.6.2: Sản phẩm phục vụ khách không đạt hình ảnh","B5.6.3: Sản phẩm phục vụ khách không đạt trạng thái"]},
+ {id:"B5.7",name:"CCDC & đồ đi kèm",pts:2,errs:["B5.7.1: Ra đồ thiếu CCDC/không hướng dẫn khách lấy CCDC đi kèm","B5.7.2: Sử dụng sai loại CCDC đi kèm","B5.7.3: Ra đồ thiếu đường que/siro đường/sữa đặc…","B5.7.4: CH phục vụ cốc giấy mang đi cho khách hàng ngồi tại cửa hàng nhưng không thông báo lý do"]},
+ {id:"B5.8",name:"Dọn bàn",pts:2,errs:["B5.8.1: Dọn bàn chậm sau 10 phút kể từ khi khách hàng ra về","B5.8.2: Không sử dụng CCDC theo quy định khi dọn bàn","B5.8.3: Dọn bàn không sạch","B5.8.4: Không sắp xếp gọn gàng bàn ghế và CCDC trên mặt bàn"]}
+],ccp:[["CCP15","Sử dụng hoa giả"],["CCP16","CH bật nhạc ngoài"],["CCP17","Đồ ăn/đồ uống sẵn sàng phục vụ khách lẫn tạp chất"],["CCP18","Đồ ăn/đồ uống sẵn sàng phục vụ khách có dấu hiệu hư hỏng, mốc, thối,…"]]},
+{id:"B6",part:"B",name:"Tiêu chuẩn vệ sinh",items:[
+ {id:"B6.1",name:"Khu vực để xe, trước cửa hàng",pts:2,errs:["B6.1.1: Có rác không được quét dọn thường xuyên ít nhất 1 tiếng/lần"]},
+ {id:"B6.2",name:"Không gian chung",pts:2,errs:["B6.2.1: Bám bụi bẩn/có rác/mạng nhện/sàn cáu bẩn/có giấy, rác nhưng nhân viên không để ý lau dọn.","B6.2.2: Không gian có mùi hôi."]},
+ {id:"B6.3",name:"Hệ thống kính",pts:1,errs:["B6.3.1: Bám bụi bẩn"]},
+ {id:"B6.4",name:"TTB, CCDC bán hàng",pts:1,errs:["B6.4.1: Bám bụi bẩn"]},
+ {id:"B6.5",name:"Quầy kệ, bàn ghế",pts:2,errs:["B6.5.1: Không sạch sẽ"]},
+ {id:"B6.6",name:"CCDC phục vụ khách hàng",pts:2,errs:["B6.6.1: Không sạch sẽ","B6.6.2: Phục vụ khách hàng CCDC ướt","B6.6.3: CCDC có mùi hôi, mùi dung dịch vệ sinh"]},
+ {id:"B6.7",name:"Thiết bị/CCDC bảo quản, chứa đựng",pts:2,errs:["B6.7.1: Thiết bị bảo quản không được vệ sinh sạch sẽ, có thực phẩm rơi vãi/han gỉ/bụi bẩn.","B6.7.2: CCDC chứa đựng vệ sinh không sạch","B6.7.3: Không được vệ sinh bằng dung dịch tẩy rửa đúng quy định."]},
+ {id:"B6.8",name:"Các thiết bị/CCDC pha chế",pts:2,errs:["B6.8.1: Thiết bị pha chế vệ sinh không sạch","B6.8.2: CCDC pha chế vệ sinh không sạch","B6.8.3: Không được vệ sinh bằng dung dịch tẩy rửa đúng quy định."]},
+ {id:"B6.9",name:"Dụng cụ vệ sinh, thùng rác",pts:1,errs:["B6.9.1: Dụng cụ vệ sinh két bẩn","B6.9.2: Chổi, hót rác, lau nhà để trực tiếp dưới sàn","B6.9.3: Thùng rác không đậy nắp kín/không lót bao nilong bên trong","B6.9.4: Rác không để gọn trong thùng, rác tràn đầy","B6.9.5: Khăn lau không sử dụng đúng màu quy định","B6.9.6: Khăn lau không được giặt sạch sẽ và phơi khô theo quy định"]},
+ {id:"B6.10",name:"Hệ cấp - thoát nước",pts:1,errs:["B6.10.1: Bồn rửa không được vệ sinh sạch cuối ca và trước khi sử dụng","B6.10.2: Hệ thống bẫy mỡ, cống thoát nước không được vệ sinh sạch sẽ/mùi hôi"]},
+ {id:"B6.11",name:"Nhà vệ sinh",pts:2,errs:["B6.11.1: NVS có mùi hôi hoặc thiết bị cáu bẩn","B6.11.2: Sàn ướt/bẩn/có giấy rác","B6.11.3: Thiết bị, CCDC: quạt, quạt gió,… sử dụng bám bụi"]}
+],ccp:[["CCP19","TTB/CCDC cáu bẩn, lên mốc ở những vị trí tiếp xúc trực tiếp với thực phẩm hoặc tiếp xúc với tay nhân viên"],["CCP20","Khăn lau không đảm bảo vệ sinh, sử dụng sai mục đích dẫn đến nguy cơ lây nhiễm chéo"],["CCP21","Dụng cụ vệ sinh, dung dịch vệ sinh để không đúng nơi quy định có nguy cơ lây nhiễm chéo vào thực phẩm"]]},
+{id:"B7",part:"B",name:"An toàn thực phẩm (ATTP)",items:[
+ {id:"B7.1",name:"Chất lượng nước và đá tại cửa hàng",pts:2,errs:["B7.1.1: Cảm quan nước pha chế không đạt: có màu, mùi vị lạ, nước đục.","B7.1.2: 1 trong số các chỉ tiêu pH, TDS không đạt đã được QC thông báo nhưng không khắc phục tối đa 7 ngày.","B7.1.3: Đá không đảm bảo chất lượng: có tạp chất, bao bì không sạch"]},
+ {id:"B7.2",name:"Nhập hàng",pts:2,errs:["B7.2.1: Đá, trái cây, bánh, nguyên liệu thực phẩm không đóng thùng kín đặt trực tiếp dưới sàn","B7.2.2: Hàng đông, lạnh không được cất vào tủ bảo quản đúng nhiệt độ trong vòng 30p","B7.2.3: Không kiểm tra và phát hiện kịp thời hàng nhập không đạt theo tiêu chuẩn về quy cách, HSD"]},
+ {id:"B7.3",name:"Bảo quản nguyên liệu & bán thành phẩm",pts:3,errs:["B7.3.1: Bảo quản sai nhiệt độ yêu cầu","B7.3.2: Không ghi đầy đủ tem nhãn trừ nhóm trái cây/không được bao gói kín","B7.3.3: Không được sắp xếp và sử dụng theo nguyên tắc FEFO","B7.3.4: Bảo quản BTP nóng >40 độ trong tủ lạnh"]},
+ {id:"B7.4",name:"Rửa trái cây",pts:2,errs:["B7.4.1: Không ngâm nước muối/Ngâm sai nồng độ muối quy định/Không tráng lại bằng nước sạch sau khi ngâm nước muối"]},
+ {id:"B7.5",name:"Tuân thủ các quy định ATTP",pts:3,errs:["B7.5.1: NV không thực hiện rửa tay và đeo găng tay theo quy định","B7.5.2: Không dán băng và đeo găng tay khi có vết thương hở","B7.5.3: NV để tóc không gọn gàng, không đội mũ, móng tay dài quá 1mm, sơn móng, gắn móng giả","B7.5.4: NV đeo trang sức","B7.5.5: NV pha chế & phục vụ không đeo khẩu trang","B7.5.6: Mắc các bệnh truyền nhiễm, cúm, sốt,…"]},
+ {id:"B7.6",name:"Sử dụng dung dịch vệ sinh",pts:1,errs:["B7.6.1: Sử dụng dung dịch vệ sinh sai quy định: sai liều lượng, sai mục đích, sai loại quy định","B7.6.2: Không có tem nhãn nhận dạng và bảo quản không đúng khu vực quy định"]}
+],ccp:[["CCP22","Cửa hàng không rửa trái cây trước khi sử dụng"],["CCP23","Thực phẩm rửa trực tiếp trong bồn khi bồn chưa được vệ sinh sạch sẽ"],["CCP24","Rửa trái cây bằng dụng cụ chuyên dụng cho việc vệ sinh CCDC nguy cơ lây nhiễm chéo vào thực phẩm"],["CCP25","Trái cây sau rửa còn tạp chất, bụi bẩn"],["CCP26","Bảo quản và lưu trữ thực phẩm hết HSD/chua, mốc, hỏng/có dị vật"],["CCP27","Thực phẩm để cạnh thùng rác, dung dịch vệ sinh, dụng cụ vệ sinh có nguy cơ lây nhiễm chéo"],["CCP28","Nhân viên không thực hiện rửa tay và đeo găng tay khi tiếp xúc với thực phẩm ăn liền hoặc đeo găng tay không đảm bảo vệ sinh"]]},
+{id:"B8",part:"B",name:"Quản lý",items:[
+ {id:"B8.1",name:"Quầy lưu niệm",pts:2,errs:["B8.1.1: Thiếu tag giá sản phẩm/tag giá không đúng tiêu chuẩn","B8.1.2: Sắp xếp quá ít sản phẩm theo tiêu chuẩn (dưới 50% diện tích quầy lưu niệm)","B8.1.3: Hàng hóa trên quầy lưu niệm không sắp xếp theo nguyên tắc FEFO","B8.1.4: Hàng hóa trưng bày bị rách/móp/vỡ/ngược chữ","B8.1.5: Khu vực quầy lưu niệm xuất hiện túi nilon KH có thể nhìn thấy.","B8.1.1-KPH: Sản phẩm thực phẩm trưng bày bán gần hết HSD (còn dưới 1/3 HSD)"]},
+ {id:"B8.2",name:"NVS đầy đủ CCDC, nước rửa tay và thực hiện checklist",pts:2,errs:["B8.2.1-KPH: Sử dụng các loại chai xịt vệ sinh nhà tắm, nước thơm xịt phòng","B8.2.2-KPH: Sử dụng nước rửa tay hoặc bình đựng nước rửa tay không đúng chủng loại quy định","B8.2.1: Thiếu nước rửa tay/giấy lau tay (đối với các cửa hàng không có máy sấy tay)/giấy vệ sinh","B8.2.2: Không có checklist kiểm tra vệ sinh/có nhưng không thực hiện đúng quy định."]},
+ {id:"B8.3",name:"BQL, nhân viên nắm bắt được các tiêu chuẩn & update từ thương hiệu",pts:2,errs:["B8.3.1-KPH: Quản lý & Trợ lý cửa hàng chưa được đào tạo về tiêu chuẩn thương hiệu/tiêu chuẩn pha chế/tiêu chuẩn bán hàng và các nội dung cập nhật từ thương hiệu.","B8.3.1: Không biết cách truy cập các kênh để đọc tài liệu và xem thông báo từ Cộng","B8.3.2: Không nắm được thông tin các chương trình bán hàng, sự kiện của thương hiệu đã được gửi email/thông báo.","B8.3.3: Nhân viên không nắm được kiến thức liên quan đến vị trí công việc phụ trách"]},
+ {id:"B8.4",name:"Kiểm soát côn trùng",pts:1,errs:["B8.4.1: Xuất hiện côn trùng/động vật gây hại nhưng không thông báo đến NCC xử lý kịp thời","B8.4.2: Không thực hiện các biện pháp khuyến cáo để phòng tránh côn trùng: vỏ thùng xốp, thùng carton không được dọn dẹp loại bỏ cuối ngày, đèn bắt côn trùng không được bật sáng 24/24h (nếu có).","B8.4.3: Không lưu trữ các biên bản xử lý côn trùng trong vòng 3 tháng gần nhất"]},
+ {id:"B8.5",name:"Kho, tủ nhân viên, đồ dùng cá nhân",pts:2,errs:["B8.5.1: Đồ cá nhân không để gọn gàng, đúng nơi quy định","B8.5.2: Cánh tủ cá nhân không được đóng kín.","B8.5.2: Giày dép nhân viên để trong khu vực bar, khu vực bảo quản thực phẩm không được bao bọc kín","B8.5.3: Đồ ăn nhân viên bảo quản trong tủ, giá kệ không có tem phân biệt với thực phẩm của cửa hàng","B8.5.4: Kho sắp xếp không gọn gàng, sạch sẽ.","B8.5.5: Cửa/rèm kho không được đóng kín sau khi sử dụng","B8.5.6: Thiết bị, CCDC hỏng để trong kho không được thanh lý trong thời gian tối đa 3 tháng"]},
+ {id:"B8.6",name:"Phòng cháy chữa cháy",pts:2,errs:["B8.6.1: Bình chữa cháy hết hạn sử dụng, mất chốt an toàn","B8.6.2: Không có/không đủ tiêu lệnh chữa cháy, nội quy PCCC","B8.6.3: Khu vực để bình chữa cháy không gọn gàng/không thuận tiện cho công tác chữa cháy"]}
+],ccp:[["CCP29","Xuất hiện nguyên liệu không đúng tiêu chuẩn khi chưa có sự đồng ý từ Cộng"],["CCP30","Dán sai giá sản phẩm lưu niệm"],["CCP31","Xuất hiện hàng hóa trên quầy lưu niệm đã hết hạn sử dụng"],["CCP32","Có dấu vết của côn trùng trong thực phẩm: xác ruồi - muỗi - gián, lông chuột, phân côn trùng…"]]}
+];
+
+const DATA_KHBM = [
+{id:"A1",part:"A",name:"Hạ tầng & hệ thống kỹ thuật",items:[
+ {id:"A1.1",name:"Hệ thống sàn, trần, tường, cửa, kính, vách ngăn",pts:0,errs:["A1.1.1-KPH: Trần tường bong tróc, nứt vỡ, thấm dột, sàn ẩm ướt","A1.1.2-KPH: Cửa kính, cửa ra vào không đảm bảo an toàn"]},
+ {id:"A1.2",name:"Hệ thống âm thanh & wifi",pts:0,errs:["A1.2.1-KPH: Đường truyền wifi không đảm bảo"]},
+ {id:"A1.3",name:"Hệ thống điện, chiếu sáng, làm mát,…",pts:2,errs:["A1.3.1-KPH: Có thiết bị điện bị hỏng","A1.3.1: Bóng đèn cháy không thay"]}
+],ccp:[]},
+{id:"A2",part:"A",name:"Nội thất, trang trí & nhận diện thương hiệu",items:[
+ {id:"A2.1",name:"Bảng - biển thương hiệu",pts:2,errs:["A2.1.1: Không bật đúng giờ quy định (từ 18h đối với mùa hè và 17h đối với mùa đông)","A2.1.1-KPH: Bị khuyết/vỡ/cháy bóng…"]},
+ {id:"A2.2",name:"Ô đúng tiêu chuẩn thương hiệu",pts:2,errs:["A2.2.1-KPH: Mờ logo/lỏng chân","A2.2.1: Ô rách không thay"]},
+ {id:"A2.3",name:"Hệ thống quầy, kệ, tủ",pts:0,errs:["A2.3.1-KPH: Xuống cấp, không đảm bảo công năng"]},
+ {id:"A2.4",name:"Bàn ghế",pts:3,errs:["A2.4.1: Bàn ghế gãy, lung lay không đảm bảo an toàn","A2.4.2: Vỏ đệm rách/sờn/mất thẩm mỹ/sai tiêu chuẩn","A4.2.1-KPH: Bàn ghế tróc sơn, han gỉ","A2.4.2-KPH: Bàn ghế cập kênh","A2.4.2-KPH: Bàn ghế gia cố lộ ke không đảm bảo thẩm mĩ"]},
+ {id:"A2.5",name:"Vật dụng trang trí, rèm",pts:0,errs:["A2.5.1-KPH: Khung tranh, tranh ảnh trang trí cũ/rách/mờ/bong tróc/không rõ hình","A2.5.3-KPH: Rèm rách/cũ/bạc màu","A2.5.4-KPH: Cửa hàng không thực hiện tháo dỡ các đồ trang trí theo dịp khi hết chương trình","A2.5.5-KPH: Dán các loại poster cổ động, các loại sticker trong cửa hàng"]},
+ {id:"A2.6",name:"Cây cảnh, lọ hoa",pts:2,errs:["A2.6.2-KPH: Chậu cây nhựa (không áp dụng với các chậu cây dạng treo)","A2.6.1: Cây héo, lá vàng úa, cây chết","A2.6.2: Chậu cây, lọ hoa nứt/vỡ"]}
+],ccp:[["CCP01","Sử dụng Ô không phải Ô thương hiệu Cộng."]]},
+{id:"A3",part:"A",name:"Trang thiết bị & công cụ dụng cụ",items:[
+ {id:"A3.1",name:"Thiết bị, CCDC bán hàng",pts:2,errs:["A3.1.1: Máy POS, máy in không hoạt động tốt","A3.1.2: Thẻ rung không hoạt động/cờ số bong tróc, không rõ số","A3.1.3: Menu, POSM bong tróc/gãy gập, cũ, sờn màu, gãy khung"]},
+ {id:"A3.2",name:"CCDC phục vụ khách hàng",pts:2,errs:["A3.2.1: Khay bê đồ nứt vỡ/sờn cũ không đảm bảo hình ảnh"]}
+],ccp:[["CCP05","Ly, cốc, chén, đĩa, bát... nứt vỡ/sứt mẻ phục vụ khách hàng"]]},
+{id:"B1",part:"B",name:"Tiêu chuẩn bảo vệ",items:[
+ {id:"B1.1",name:"Tác phong diện mạo bảo vệ",pts:5,errs:["B1.1.1: Không tuân thủ đồng phục/trang phục không gọn gàng/đi dép lê","B1.1.2: Bảo vệ ngồi/nằm/gác chân lên xe khách/ngủ trong giờ làm việc","B1.1.3: Có mùi rượu bia/mùi cơ thể khi làm việc","B1.1.4: Mặc đồng phục hút thuốc trong giờ làm việc","B1.1.5: Để vật dụng cá nhân không gọn gàng, không đúng nơi quy định"]},
+ {id:"B1.2",name:"Bảo vệ đón tiếp KH",pts:5,errs:["B1.1.1: Không hỗ trợ khách dắt xe khi khách cần/Không hướng dẫn khách khu vực để xe","B1.2.2: Không che yên xe cho khách khi trời nắng","B1.2.3: Có hành động, lời nói không thân thiện, không lịch sự gây khó chịu với khách hàng"]}
+],ccp:[["CCP07","Bảo vệ nói tục/chửi bậy/đánh cãi nhau, quát mắng/sàm sỡ/không tôn trọng khách hàng"]]},
+{id:"B2",part:"B",name:"Tiêu chuẩn nhân viên cửa hàng",items:[
+ {id:"B2.1",name:"Tác phong diện mạo",pts:5,errs:["B2.1.1: Không đầy đủ đồng phục, đồng phục không đảm bảo hình ảnh","B2.1.5: Có mùi rượu bia/mùi cơ thể/mùi nước hoa"]},
+ {id:"B2.2",name:"Đón tiếp & phục vụ khách hàng",pts:5,errs:["B2.2.1: Không hỗ trợ yêu cầu của khách hàng khi cần","B2.2.2: Thái độ không thân thiện, không lịch sự khi phục vụ khách"]},
+ {id:"B2.3",name:"Tuân thủ nội quy làm việc",pts:5,errs:["B2.3.1: Không tuân thủ quy tắc ăn ca: không tháo mũ và tạp dề khi ăn trừ trường hợp cửa hàng có 1 nhân viên","B2.3.2: Sử dụng điện thoại không vì mục đích công việc","B2.3.3: Tụ tập/làm việc riêng/nói to/gọi với/cười đùa"]}
+],ccp:[["CCP08","Nhân viên nói tục/chửi bậy/đánh cãi nhau, quát mắng/sàm sỡ/không tôn trọng khách hàng."],["CCP09","Nhân viên ngủ trong giờ làm việc"],["CCP10","Mặc đồng phục & hút thuốc trong giờ làm việc"]]},
+{id:"B3",part:"B",name:"Tiêu chuẩn bán hàng",items:[
+ {id:"B3.1",name:"Quy trình bán hàng",pts:5,errs:["B3.1.1: Thu ngân không có mặt tại quầy để khách phải gọi/chờ","B3.1.2: Không thực hiện \"CỘNG XIN CHÀO\" & \"CỘNG CẢM ƠN\"","B3.1.3: Không thực hiện bán hàng gia tăng","B3.1.4: Không nắm được thông tin sản phẩm/quy trình bán hàng để tư vấn/hỗ trợ khi khách hàng cần","B3.1.5: Không chủ động hỏi thông tin tích điểm cho khách hàng","B3.1.6: Không nhắc lại order"]},
+ {id:"B3.2",name:"Chương trình marketing",pts:5,errs:["B3.2.1: Trưng bày những ấn phẩm quảng cáo đã hết hạn","B3.2.2: Không trưng bày POSM trong thời gian diễn ra các chương trình Marketing","B3.2.3: Nhân viên không chủ động tư vấn/tư vấn sai các chương trình MKT đang áp dụng tới KH."]}
+],ccp:[["CCP11","Nhân viên thanh toán không in bill, không trả hóa đơn cho khách hàng, tích điểm không đúng tài khoản"],["CCP12","Menu/POSM chỉnh sửa: sai giá, dán che tên sản phẩm hoặc không đúng quy định, lỗi thời"]]},
+{id:"B5",part:"B",name:"Tiêu chuẩn phục vụ",items:[
+ {id:"B5.1",name:"Công tác chuẩn bị giờ mở cửa/Dọn dẹp cửa hàng cuối ngày",pts:2,errs:["B5.1.1: Mở cửa hàng bán hàng muộn hơn quy định","B5.1.2: Đến giờ mở cửa nhưng chưa có khu vực/sản phẩm nào sẵn sàng phục vụ","B5.1.3: Mời khách hàng về trước giờ đóng cửa/mời khách hàng di chuyển vị trí mà không xin lỗi khách","B5.1.4: Dọn dẹp trước giờ đóng cửa vì lý do đặc biệt nhưng không xin phép khách"]},
+ {id:"B5.2",name:"Khu vực ra đồ, quầy tự phục vụ",pts:2,errs:["B5.2.1: Đặt trực tiếp thìa, ống hút không có bọc, giấy ăn trong lòng khay gỗ/khay sắt (Đặt vào cốc take hoặc cốc camen)","B5.2.2: Khu vực ra đồ thiếu CCDC (CCDC bắt buộc: ống hút phi 8, 12, ống hút đồ nóng, thìa inox ngắn và dài, lót cốc, nắp cốc take, túi đơn, túi đôi)","B5.2.3: Quầy tự phục vụ setup thiếu CCDC (CCDC bắt buộc: nước lọc, cốc uống nước, tăm, đường, ống hút, khăn giấy khô)."]},
+ {id:"B5.3",name:"Hoa tươi",pts:2,errs:["B5.3.1: <20% số bàn trong nhà được trưng bày hoa tươi (không áp dụng với bàn kích thước 40x40cm trở xuống)","B5.3.2: Hoa héo","B5.3.3: Lọ hoa không sạch, nước đục/có rêu/có mùi"]},
+ {id:"B5.4",name:"Nhạc",pts:2,errs:["B5.4.1: CH không bật nhạc trong giờ hoạt động"]},
+ {id:"B5.5",name:"Cách thức phục vụ đồ ăn/đồ uống",pts:5,errs:["B5.5.1: Không sử dụng khay khi phục vụ đồ uống cho khách","B5.5.2: Tay cầm sát miệng cốc (cách miệng tối thiểu 1cm)","B5.5.3: Không nói mời khách hoặc gọi tên đồ ăn/đồ uống","B5.5.4: Phục vụ chậm (thời gian KH nhận được đồ uống >8p tính từ lúc order xong)","B5.5.5: Thời gian ra đồ không đúng với thời gian hẹn khách (với trường hợp >8p)","B5.5.6: Đồ ăn chơi không được phục vụ trong thời gian chờ đồ uống."]},
+ {id:"B5.6",name:"Đồ ăn/uống phục vụ khách",pts:5,errs:["B5.6.1: Ra đồ không đúng sản phẩm khách Order","B5.6.2: Sản phẩm phục vụ khách không đạt hình ảnh","B5.6.3: Sản phẩm phục vụ khách không đạt trạng thái"]},
+ {id:"B5.7",name:"CCDC & đồ đi kèm",pts:2,errs:["B5.7.1: Ra đồ thiếu CCDC/không hướng dẫn khách lấy CCDC đi kèm","B5.7.3: Ra đồ thiếu đường que/siro đường/sữa đặc…","B5.7.4: CH phục vụ cốc giấy mang đi cho khách hàng ngồi tại cửa hàng nhưng không thông báo lý do"]},
+ {id:"B5.8",name:"Dọn bàn",pts:3,errs:["B5.8.1: Dọn bàn chậm sau 10 phút kể từ khi khách hàng ra về","B5.8.2: Không sử dụng khay bê đồ khi dọn bàn, dùng giấy để lau bàn","B5.8.3: Dọn bàn không sạch","B5.8.4: Không sắp xếp gọn gàng bàn ghế và CCDC trên mặt bàn"]}
+],ccp:[["CCP15","Sử dụng hoa giả"],["CCP17","Đồ ăn/đồ uống sẵn phục vụ khách lẫn tạp chất"],["CCP18","Đồ ăn/đồ uống phục vụ khách có dấu hiệu hư hỏng, mốc, thối,…"]]},
+{id:"B6",part:"B",name:"Tiêu chuẩn vệ sinh",items:[
+ {id:"B6.1",name:"Khu vực để xe, trước cửa hàng",pts:2,errs:["B6.1.1: Có rác không được quét dọn thường xuyên ít nhất 1 tiếng/lần"]},
+ {id:"B6.2",name:"Không gian chung",pts:2,errs:["B6.2.1: Bám bụi bẩn/có rác/mạng nhện/sàn cáu bẩn/có giấy, rác nhưng nhân viên không để ý lau dọn.","B6.2.2: Không gian có mùi hôi."]},
+ {id:"B6.3",name:"Hệ thống kính",pts:2,errs:["B6.3.1: Bám bụi bẩn"]},
+ {id:"B6.4",name:"TTB, CCDC bán hàng",pts:2,errs:["B6.4.1: Bám bụi bẩn"]},
+ {id:"B6.5",name:"Quầy kệ, bàn ghế",pts:2,errs:["B6.5.1: Không sạch sẽ"]},
+ {id:"B6.6",name:"CCDC phục vụ khách hàng",pts:2,errs:["B6.6.1: Không sạch sẽ","B6.6.2: Phục vụ khách hàng CCDC ướt","B6.6.3: CCDC có mùi hôi, mùi dung dịch vệ sinh"]},
+ {id:"B6.9",name:"Dụng cụ vệ sinh, thùng rác",pts:2,errs:["B6.9.1: Dụng cụ vệ sinh két bẩn","B6.9.2: Chổi, hót rác, lau nhà để trực tiếp dưới sàn","B6.9.3: Thùng rác không đậy nắp kín/không lót bao nilong bên trong","B6.9.4: Rác không để gọn trong thùng, rác tràn đầy"]},
+ {id:"B6.11",name:"Nhà vệ sinh",pts:3,errs:["B6.11.1: NVS có mùi hôi hoặc thiết bị cáu bẩn","B6.11.2: Sàn ướt/bẩn/có giấy rác","B6.11.3: Thiết bị, CCDC: quạt, quạt gió,… sử dụng bám bụi"]}
+],ccp:[]},
+{id:"B7",part:"B",name:"An toàn thực phẩm (ATTP)",items:[
+ {id:"B7.5",name:"Tuân thủ các quy định ATTP",pts:5,errs:["B7.5.3: NV để tóc không gọn gàng, không đội mũ, móng tay dài quá 1mm, sơn móng, gắn móng giả","B7.5.4: NV đeo trang sức","B7.5.5: NV pha chế & phục vụ không đeo khẩu trang"]}
+],ccp:[]},
+{id:"B8",part:"B",name:"Quản lý",items:[
+ {id:"B8.1",name:"Quầy lưu niệm",pts:2,errs:["B8.1.1: Thiếu tag giá sản phẩm/tag giá không đúng tiêu chuẩn","B8.1.2: Sắp xếp quá ít sản phẩm theo tiêu chuẩn (dưới 50% diện tích quầy lưu niệm)","B8.1.3: Hàng hóa trên quầy lưu niệm không sắp xếp theo nguyên tắc FEFO","B8.1.4: Hàng hóa trưng bày bị rách/móp/vỡ/ngược chữ","B8.1.5: Khu vực quầy lưu niệm xuất hiện túi nilon KH có thể nhìn thấy.","B8.1.1-KPH: Sản phẩm thực phẩm trưng bày bán gần hết HSD (còn dưới 1/3 HSD)"]},
+ {id:"B8.2",name:"NVS đầy đủ CCDC, nước rửa tay và thực hiện checklist",pts:3,errs:["B8.2.1-KPH: Sử dụng các loại chai xịt vệ sinh nhà tắm, nước thơm xịt phòng","B8.2.2-KPH: Sử dụng nước rửa tay hoặc bình đựng nước rửa tay không đúng chủng loại quy định","B8.2.1: Thiếu nước rửa tay/giấy lau tay (đối với các cửa hàng không có máy sấy tay)/giấy vệ sinh","B8.2.2: Không có checklist kiểm tra vệ sinh/có nhưng không thực hiện đúng quy định."]}
+],ccp:[["CCP31","Xuất hiện hàng hóa trên quầy lưu niệm đã hết hạn sử dụng"]]}
+];
+const DATA_CMR = [
+{id:"A2",part:"A",name:"Nội thất, trang trí & nhận diện thương hiệu",items:[
+ {id:"A2.2",name:"Ô đúng tiêu chuẩn thương hiệu",pts:3,errs:["A2.2.1: Ô rách không thay"]},
+ {id:"A2.4",name:"Bàn ghế",pts:3,errs:["A2.4.2: Vỏ đệm rách/sờn/mất thẩm mỹ/sai tiêu chuẩn","A4.2.1-KPH: Bàn ghế tróc sơn, han gỉ"]},
+ {id:"A2.5",name:"Vật dụng trang trí, rèm",pts:0,errs:["A2.5.1-KPH: Khung tranh, tranh ảnh trang trí cũ/rách/mờ/bong tróc/không rõ hình","A2.5.2-KPH: Sắp xếp không đúng vị trí","A2.5.3-KPH: Rèm rách/cũ/bạc màu","A2.5.4-KPH: Cửa hàng không thực hiện tháo dỡ các đồ trang trí theo dịp khi hết chương trình","A2.5.5-KPH: Dán các loại poster cổ động, các loại sticker trong cửa hàng"]}
+],ccp:[["CCP01","Sử dụng Ô không phải Ô thương hiệu Cộng."],["CCP02","CH bổ sung đồ nội thất không phải của thương hiệu"]]},
+{id:"B1",part:"B",name:"Tiêu chuẩn bảo vệ",items:[
+ {id:"B1.1",name:"Tác phong diện mạo bảo vệ",pts:5,errs:["B1.1.1: Không tuân thủ đồng phục/trang phục không gọn gàng/đi dép lê","B1.1.2: Bảo vệ ngồi/nằm/gác chân lên xe khách/ngủ trong giờ làm việc","B1.1.4: Mặc đồng phục hút thuốc trong giờ làm việc","B1.1.5: Để vật dụng cá nhân không gọn gàng, không đúng nơi quy định"]},
+ {id:"B1.2",name:"Bảo vệ đón tiếp KH",pts:3,errs:["B1.1.1: Không hỗ trợ khách dắt xe khi khách cần/Không hướng dẫn khách khu vực để xe","B1.2.2: Không che yên xe cho khách khi trời nắng","B1.2.3: Có hành động không lịch sự gây khó chịu với khách hàng"]}
+],ccp:[["CCP07","Bảo vệ đánh cãi nhau, sàm sỡ/không tôn trọng khách hàng"]]},
+{id:"B2",part:"B",name:"Tiêu chuẩn nhân viên cửa hàng",items:[
+ {id:"B2.1",name:"Tác phong diện mạo",pts:5,errs:["B2.1.1: Không đầy đủ đồng phục, đồng phục không đảm bảo hình ảnh"]},
+ {id:"B2.3",name:"Tuân thủ nội quy làm việc",pts:5,errs:["B2.3.1: Không tuân thủ quy tắc ăn ca","B2.3.2: Sử dụng điện thoại không vì mục đích công việc","B2.3.3: Tụ tập/làm việc riêng/nói to/gọi với/cười đùa"]}
+],ccp:[["CCP08","Nhân viên nói tục/chửi bậy/đánh cãi nhau, quát mắng/sàm sỡ/không tôn trọng khách hàng."],["CCP09","Nhân viên ngủ trong giờ làm việc"],["CCP10","Mặc đồng phục & hút thuốc trong giờ làm việc"]]},
+{id:"B3",part:"B",name:"Tiêu chuẩn bán hàng",items:[
+ {id:"B3.1",name:"Quy trình bán hàng",pts:5,errs:["B3.1.1: Thu ngân không có mặt tại quầy để khách phải gọi/chờ","B3.1.2: Không thực hiện \"CỘNG XIN CHÀO\" & \"CỘNG CẢM ƠN\"","B3.1.3: Không thực hiện bán hàng gia tăng","B3.1.4: Không nắm được thông tin sản phẩm/quy trình bán hàng để tư vấn/hỗ trợ khi khách hàng cần","B3.1.5: Không chủ động hỏi thông tin tích điểm cho khách hàng","B3.1.6: Không nhắc lại order"]},
+ {id:"B3.2",name:"Chương trình marketing",pts:5,errs:["B3.2.1: Trưng bày những ấn phẩm quảng cáo đã hết hạn","B3.2.2: Không trưng bày POSM trong thời gian diễn ra các chương trình Marketing","B3.2.3: Nhân viên không chủ động tư vấn/tư vấn sai các chương trình MKT đang áp dụng tới khách hàng"]}
+],ccp:[["CCP11","Nhân viên thanh toán không in bill, không trả hóa đơn cho khách hàng"],["CCP12","Menu/POSM không đúng quy định, lỗi thời"]]},
+{id:"B4",part:"B",name:"Tiêu chuẩn pha chế",items:[
+ {id:"B4.1",name:"Ủ trà, cà phê",pts:5,errs:["B4.1.1: Thực hiện sai trình tự các bước","B4.1.2: Không cân định lượng nguyên liệu","B4.1.3: Không đo nhiệt độ theo quy định","B4.1.4: Sai thời gian ủ theo quy định","B4.1.5: Sai thao tác pha chế"]},
+ {id:"B4.2",name:"Sơ chế trái cây, thạch, kem muối",pts:5,errs:["B4.2.1: Thực hiện sai trình tự các bước trong bộ công thức","B4.2.2: Không cân định lượng","B4.2.3: Không đo nhiệt độ theo quy định","B4.2.4: Không đủ thời gian nấu theo quy định","B4.2.5: Sai thao tác"]},
+ {id:"B4.3",name:"Pha chế đồ uống",pts:5,errs:["B4.3.1: Pha chế đồ uống sai trình tự các bước","B4.3.2: Không cân đá/không cân đong định lượng nguyên liệu pha chế","B4.3.3: Không đo nhiệt độ theo quy định","B4.3.4: Sai thao tác pha chế"]},
+ {id:"B4.4",name:"Chế biến nhóm đồ ăn",pts:3,errs:["B4.4.1: Chế biến sai trình tự các bước","B4.4.2: Rã đông bánh sai thời gian/sai thời gian & nhiệt độ nướng"]}
+],ccp:[["CCP14","Đồ uống thiếu từ 1 nguyên liệu chính hoặc sử dụng không đúng loại nguyên liệu"]]},
+{id:"B5",part:"B",name:"Tiêu chuẩn phục vụ",items:[
+ {id:"B5.1",name:"Công tác chuẩn bị giờ mở cửa/Dọn dẹp cửa hàng cuối ngày",pts:2,errs:["B5.1.1: Mở cửa hàng bán hàng muộn hơn quy định","B5.1.2: Đến giờ mở cửa nhưng chưa có khu vực/sản phẩm nào sẵn sàng phục vụ","B5.1.3: Mời khách hàng về trước giờ đóng cửa/mời khách hàng di chuyển vị trí mà không xin lỗi khách","B5.1.4: Dọn dẹp trước giờ đóng cửa vì lý do đặc biệt nhưng không xin phép khách"]},
+ {id:"B5.2",name:"Khu vực ra đồ, quầy tự phục vụ",pts:3,errs:["B5.2.1: Đặt trực tiếp thìa, ống hút không có bọc, giấy ăn trong lòng khay gỗ/khay sắt (Đặt vào cốc take hoặc cốc camen)","B5.2.2: Khu vực ra đồ thiếu CCDC (CCDC bắt buộc: ống hút phi 8, 12, ống hút đồ nóng, thìa inox ngắn và dài, lót cốc, nắp cốc take, túi đơn, túi đôi)","B5.2.3: Quầy tự phục vụ setup thiếu CCDC (CCDC bắt buộc: nước lọc, cốc uống nước, tăm, đường, ống hút, khăn giấy khô)."]},
+ {id:"B5.3",name:"Hoa tươi",pts:3,errs:["B5.3.1: <20% số bàn trong nhà được trưng bày hoa tươi (không áp dụng với bàn kích thước 40x40cm trở xuống)","B5.3.2: Hoa héo"]},
+ {id:"B5.5",name:"Cách thức phục vụ đồ ăn/đồ uống",pts:5,errs:["B5.5.1: Không sử dụng khay khi phục vụ đồ uống cho khách","B5.5.2: Tay cầm sát miệng cốc (cách miệng tối thiểu 1cm)","B5.5.4: Phục vụ chậm (thời gian KH nhận được đồ uống >8p tính từ lúc order xong)","B5.5.6: Đồ ăn chơi không được phục vụ trong thời gian chờ đồ uống."]},
+ {id:"B5.6",name:"Đồ ăn/uống phục vụ khách",pts:3,errs:["B5.6.2: Sản phẩm phục vụ khách không đạt hình ảnh"]},
+ {id:"B5.7",name:"CCDC & đồ đi kèm",pts:3,errs:["B5.7.1: Ra đồ thiếu CCDC/không hướng dẫn khách lấy CCDC đi kèm","B5.7.2: Sử dụng sai loại CCDC đi kèm","B5.7.3: Ra đồ thiếu đường que/siro đường/sữa đặc…","B5.7.4: CH phục vụ cốc giấy mang đi cho khách hàng ngồi tại cửa hàng nhưng không thông báo lý do"]},
+ {id:"B5.8",name:"Dọn bàn",pts:5,errs:["B5.8.1: Dọn bàn chậm sau 10 phút kể từ khi khách hàng ra về","B5.8.2: Không sử dụng CCDC theo quy định khi dọn bàn","B5.8.3: Dọn bàn không sạch","B5.8.4: Không sắp xếp gọn gàng bàn ghế và CCDC trên mặt bàn"]}
+],ccp:[["CCP15","Sử dụng hoa giả"]]},
+{id:"B6",part:"B",name:"Tiêu chuẩn vệ sinh",items:[
+ {id:"B6.9",name:"Dụng cụ vệ sinh, thùng rác",pts:3,errs:["B6.9.2: Chổi, hót rác, lau nhà để trực tiếp dưới sàn","B6.9.3: Thùng rác không đậy nắp kín/không lót bao nilong bên trong","B6.9.4: Rác không để gọn trong thùng, rác tràn đầy","B6.9.5: Khăn lau không sử dụng đúng màu quy định","B6.9.6: Khăn lau không được giặt sạch sẽ và phơi khô theo quy định"]}
+],ccp:[["CCP20","Khăn lau không đảm bảo vệ sinh, sử dụng sai mục đích dẫn đến nguy cơ lây nhiễm chéo"]]},
+{id:"B7",part:"B",name:"An toàn thực phẩm (ATTP)",items:[
+ {id:"B7.2",name:"Nhập hàng",pts:5,errs:["B7.2.1: Đá, trái cây, bánh, nguyên liệu thực phẩm không đóng thùng kín đặt trực tiếp dưới sàn","B7.2.2: Hàng đông, lạnh không được cất vào tủ bảo quản đúng nhiệt độ trong vòng 30p","B7.2.3: Không kiểm tra và phát hiện kịp thời hàng nhập không đạt theo tiêu chuẩn về quy cách, HSD"]},
+ {id:"B7.3",name:"Bảo quản nguyên liệu & bán thành phẩm",pts:3,errs:["B7.3.1: Bảo quản sai nhiệt độ yêu cầu","B7.3.2: Không được bao gói kín"]},
+ {id:"B7.4",name:"Rửa trái cây",pts:5,errs:["B7.4.1: Không ngâm nước muối/Ngâm sai nồng độ muối quy định/Không tráng lại bằng nước sạch sau khi ngâm nước muối"]},
+ {id:"B7.5",name:"Tuân thủ các quy định ATTP",pts:5,errs:["B7.5.1: NV không thực hiện rửa tay và đeo găng tay theo quy định","B7.5.2: Không dán băng và đeo găng tay khi có vết thương hở","B7.5.3: NV để tóc không gọn gàng, không đội mũ, móng tay dài quá 1mm, sơn móng, gắn móng giả","B7.5.4: NV đeo trang sức","B7.5.5: NV pha chế & phục vụ không đeo khẩu trang"]}
+],ccp:[["CCP22","Cửa hàng không rửa trái cây trước khi sử dụng"],["CCP24","Rửa trái cây bằng dụng cụ chuyên dụng cho việc vệ sinh CCDC nguy cơ lây nhiễm chéo vào thực phẩm"],["CCP27","Thực phẩm để cạnh thùng rác, dung dịch vệ sinh, dụng cụ vệ sinh có nguy cơ lây nhiễm chéo"],["CCP28","Nhân viên không thực hiện rửa tay và đeo găng tay khi tiếp xúc với thực phẩm ăn liền hoặc đeo găng tay không đảm bảo vệ sinh"]]},
+{id:"B8",part:"B",name:"Quản lý",items:[
+ {id:"B8.5",name:"Kho, tủ nhân viên, đồ dùng cá nhân",pts:3,errs:["B8.5.1: Đồ cá nhân không để gọn gàng, đúng nơi quy định","B8.5.2: Cánh tủ cá nhân không được đóng kín.","B8.5.2: Giày dép nhân viên để trong khu vực bar, khu vực bảo quản thực phẩm không được bao bọc kín","B8.5.4: Kho sắp xếp không gọn gàng, sạch sẽ.","B8.5.5: Cửa/rèm kho không được đóng kín sau khi sử dụng"]}
+],ccp:[]}
+];
+
+const SIGN_HASH=["59f05667328aebb8e5c530c98f84b043a1cb5050ca8f14d2deb13035ffa54dc7", "f2d2da02ebb09865169f25a85e4d0924b519bd14da3621e9f693af98b8a0cbd7", "ab161b3243aba966ead9921b6928850d9ee1bfcf03b25919694898ff51d6ac76"];
+function sha256(s){const K=[],H=[];let p=2,n=0;const f=x=>(x-(x|0))*4294967296|0;
+ while(n<64){let ok=true;for(let d=2;d*d<=p;d++)if(p%d===0){ok=false;break}if(ok){if(n<8)H[n]=f(Math.pow(p,1/2));K[n++]=f(Math.cbrt(p));}p++;}
+ const b=[...new TextEncoder().encode(s)],l=b.length*8;b.push(0x80);while(b.length%64!==56)b.push(0);
+ for(let i=7;i>=0;i--)b.push(i>3?0:(l>>>(i*8))&255);
+ const r=(x,y)=>(x>>>y)|(x<<(32-y));
+ for(let i=0;i<b.length;i+=64){const w=[];for(let j=0;j<16;j++)w[j]=(b[i+j*4]<<24)|(b[i+j*4+1]<<16)|(b[i+j*4+2]<<8)|b[i+j*4+3];
+  for(let j=16;j<64;j++){const s0=r(w[j-15],7)^r(w[j-15],18)^(w[j-15]>>>3),s1=r(w[j-2],17)^r(w[j-2],19)^(w[j-2]>>>10);w[j]=(w[j-16]+s0+w[j-7]+s1)|0;}
+  let [a,c,d,e,g,h,k,m]=H;
+  for(let j=0;j<64;j++){const t1=(m+(r(g,6)^r(g,11)^r(g,25))+((g&h)^(~g&k))+K[j]+w[j])|0,t2=((r(a,2)^r(a,13)^r(a,22))+((a&c)^(a&d)^(c&d)))|0;m=k;k=h;h=g;g=(e+t1)|0;e=d;d=c;c=a;a=(t1+t2)|0;}
+  H[0]=(H[0]+a)|0;H[1]=(H[1]+c)|0;H[2]=(H[2]+d)|0;H[3]=(H[3]+e)|0;H[4]=(H[4]+g)|0;H[5]=(H[5]+h)|0;H[6]=(H[6]+k)|0;H[7]=(H[7]+m)|0;}
+ return H.map(x=>(x>>>0).toString(16).padStart(8,"0")).join("");}
+const ROLES=["Người phê duyệt","Người soát xét","Người soạn thảo"];
+const DEF_APPR=[{name:"Nguyễn Thị Kim Dung",title:"Giám đốc điều hành",date:"28/06/2026"},{name:"Nguyễn Hà My",title:"PGĐ. Vận hành hệ thống",date:"28/06/2026"},{name:"Phạm Thị Thu Huyền",title:"TP. Kiểm soát chất lượng",date:"28/06/2026"}];
+const RL={KD:"KĐ",CCT:"CCT",DAT:"ĐẠT",VYC:"VYC"};
+const LATE_DAYS=3;
+const FORMS={
+ qc:{key:"qc",short:"QC",prefix:"QC",ctrl:"CCP.BM-04-QC",doc:"CCP-VHM-CL-1.3",full:"BẢNG ĐÁNH GIÁ CHẤT LƯỢNG VẬN HÀNH CỬA HÀNG – QC",name:"Bảng đánh giá QC",
+   desc:"Chấm toàn diện cửa hàng: cơ sở vật chất, thiết bị, pha chế, phục vụ, vệ sinh, an toàn thực phẩm và quản lý.",data:DATA},
+ khbm:{key:"khbm",short:"KHBM",prefix:"KHBM",ctrl:"CCP.BM-02-KHBM",doc:"CCP-VHM-CL-1.1",full:"BẢNG ĐÁNH GIÁ CHẤT LƯỢNG VẬN HÀNH CỬA HÀNG – KHBM",name:"Bảng đánh giá KHBM",
+   desc:"Chấm những gì khách nhìn thấy: không gian, nhân viên, bán hàng, phục vụ và vệ sinh khu khách.",data:DATA_KHBM},
+ cmr:{key:"cmr",short:"QC CMR",prefix:"CMR",ctrl:"CCP.BM-03-CMR",doc:"CCP-VHM-CL-1.2",full:"BẢNG ĐÁNH GIÁ CHẤT LƯỢNG VẬN HÀNH CỬA HÀNG – QC-CMR",name:"Bảng đánh giá QC CMR",
+   desc:"Tập trung khu quầy bar: pha chế, an toàn thực phẩm, kho và tủ nhân viên, cùng phục vụ tại bàn.",data:DATA_CMR}};
+const TYPES=["qc","khbm","cmr"];
+Object.values(FORMS).forEach(F=>{F.items=[];F.ccps=[];F.data.forEach(g=>{g.items.forEach(it=>F.items.push({...it,g:g.id}));g.ccp.forEach(([c,t])=>F.ccps.push({c,t,g:g.id}));});});
+const APP_URL="https://claude.ai/artifact/MKoVUGVV7CkvkLC8XD9g5M";
+const pLink=id=>(location.protocol==="file:"?"":APP_URL)+"#xem-"+id;
+const NEWTAB='target="_blank" rel="noopener"';
+const typeOf=r=>FORMS[r?.type]?r.type:"qc";
+const STORES=["Cộng – 54 Mã Mây","Cộng – 152 Trung Kính","Cộng – 116 Cầu Gỗ","Cộng – 32 Điện Biên Phủ","Cộng – Hồ Tây","Cộng – 27 Lý Thường Kiệt","Cộng – Vincom Bà Triệu","Cộng – 26 Lý Tự Trọng","Cộng – 93 Nguyễn Huệ","Cộng – 35 Trần Quang Khải","Cộng – Phú Mỹ Hưng","Cộng – Thảo Điền","Cộng – 98 Bạch Đằng","Cộng – Hội An","Cộng – Hạ Long","Cộng – Đà Lạt"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const p2=n=>String(n).padStart(2,"0");
+const fmtD=s=>{if(!s)return "–";const [y,m,d]=s.slice(0,10).split("-");return `${d}/${m}/${y}`};
+const fmtDT=s=>{const d=new Date(s);return `${p2(d.getHours())}:${p2(d.getMinutes())} ${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`};
+const pctS=p=>p==null?"–":(Math.round(p*1000)/10).toLocaleString("vi-VN")+"%";
+const clone=o=>JSON.parse(JSON.stringify(o));
+const now=()=>new Date();
+const thisMonth=()=>{const d=now();return `${d.getFullYear()}-${p2(d.getMonth()+1)}`};
+const mLabel=m=>`Tháng ${+m.slice(5)}/${m.slice(0,4)}`;
+const ICON={warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg>',
+ dir:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'};
+
+/* ---------- tính điểm ---------- */
+function compute(r){
+  const res=r.res||{},ccp=r.ccp||{},F=FORMS[typeOf(r)];
+  const groups=F.data.map(g=>{const o={id:g.id,name:g.name,part:g.part,n:g.items.length,pts:0,d:0,k:0,na:0};
+    g.items.forEach(it=>{o.pts+=it.pts;const v=res[it.id];if(v==="D")o.d+=it.pts;else if(v==="K")o.k+=it.pts;else if(v==="NA")o.na+=it.pts;});
+    o.pct=o.pts-o.na>0?o.d/(o.pts-o.na):null;return o;});
+  const T={pts:0,d:0,k:0,na:0};groups.forEach(g=>{T.pts+=g.pts;T.d+=g.d;T.k+=g.k;T.na+=g.na});
+  const done=F.items.filter(it=>res[it.id]).length,ccpDone=F.ccps.filter(c=>ccp[c.c]).length;
+  const pct=done&&T.pts-T.na>0?T.d/(T.pts-T.na):null;
+  const ccpN=F.ccps.filter(c=>ccp[c.c]==="K").length;
+  const s5=pct==null?null:pct*5;
+  const rate=s5==null?null:s5<4.1?"KD":s5<4.25?"CCT":s5<4.75?"DAT":(ccpN?"DAT":"VYC");
+  const sig=r.sig||[null,null,null],nSig=sig.filter(Boolean).length;
+  const age=r.date?(now()-new Date(r.date+"T00:00"))/864e5:0;
+  const ss=nSig===3?"full":age>LATE_DAYS+1?"late":"wait";
+  return {groups,T,pct,s5,rate,ccpN,done,ccpDone,nSig,ss,F};
+}
+
+/* ---------- dữ liệu ---------- */
+let db=null,docs=new Map(),loaded=false,offline=false;
+let cur=null,curId=null,dirty=false,tab="form",lastSeen=null;
+let route={kind:"home"};
+function norm(d){
+  d=clone(d);d.type=typeOf(d);const F=FORMS[d.type];
+  if(!d.res){d.res={};F.items.forEach(it=>d.res[it.id]=(d.fails||[]).includes(it.id)?"K":(d.naItems||[]).includes(it.id)?"NA":"D");}
+  if(!d.ccp){d.ccp={};F.ccps.forEach(x=>d.ccp[x.c]=(d.ccpK||[]).includes(x.c)?"K":"D");}
+  delete d.fails;delete d.naItems;delete d.ccpK;
+  d.notes=d.notes||{};d.note=d.note||"";d.appr=d.appr||clone(DEF_APPR);d.sig=d.sig||[null,null,null];
+  return d;
+}
+function allRecs(){return [...docs].map(([id,d])=>({id,...d,_c:compute(d)}));}
+function months(){
+  const ms=new Set(allRecs().map(r=>r.month));ms.add(thisMonth());
+  const sorted=[...ms].filter(Boolean).sort();const out=[];
+  let [y,m]=sorted[0].split("-").map(Number);const [ey,em]=sorted[sorted.length-1].split("-").map(Number);
+  while(y<ey||(y===ey&&m<=em)){out.push(`${y}-${p2(m)}`);m++;if(m>12){m=1;y++;}}
+  return out.reverse();
+}
+function setStatus(t,err){const s=$("status");s.textContent=t||"";s.className="status"+(err?" err":"");}
+
+async function initDb(){
+  const timer=setTimeout(()=>{if(!loaded)setStatus("Chưa kết nối được kho dữ liệu, đang thử lại…",true)},10000);
+  try{db=await window.claude?.use?.("db");}catch(e){db=null}
+  if(!db){clearTimeout(timer);offline=true;loaded=true;setStatus("Không có kho dữ liệu ở chế độ xem này: phiếu chỉ được giữ đến khi đóng trang.",true);render();return;}
+  db.collection("phieu").onSnapshot(snap=>{
+    clearTimeout(timer);
+    docs=new Map(snap.docs.map(d=>[d.id,norm(d.data())]));
+    if(!snap.metadata.fromCache){loaded=true;setStatus("");}
+    if(route.kind==="form"&&curId){
+      const d=docs.get(curId);
+      if(!d){if(!dirty){location.hash="";}}
+      else if(!dirty&&d.updatedAt!==lastSeen){cur=clone(d);lastSeen=d.updatedAt;route.m=d.month;route.type=d.type;renderNav();renderForm();return;}
+      renderNav();return;
+    }
+    render();
+  },e=>{clearTimeout(timer);setStatus("Không đọc được dữ liệu ("+e.code+").",true);});
+}
+
+/* ---------- điều hướng ---------- */
+function renderNav(){
+  const miss=allRecs().filter(r=>r._c.ss!=="full"),late=miss.filter(r=>r._c.ss==="late").length;
+  const b=$("navNeed");if(b)b.innerHTML=`Phiếu cần ký <span class="flag${late?"":" w"}">${miss.length}</span>`;
+  document.querySelectorAll("#hnav a").forEach(a=>a.classList.toggle("on",(a.dataset.r==="home"&&route.kind==="home")||(a.dataset.r==="need"&&route.kind==="list"&&route.type==="all")));
+}
+function parseHash(){
+  const h=location.hash.slice(1);let m;
+  if(m=h.match(/^moi-(qc|khbm|cmr)(?:-(\d{4}-\d{2}))?$/))return {kind:"form",id:null,type:m[1],m:m[2]||thisMonth()};
+  if(m=h.match(/^(?:p|xem)-([a-z0-9-]+)$/))return {kind:"form",id:m[1]};
+  if(m=h.match(/^loai-(qc|khbm|cmr)$/))return {kind:"list",type:m[1]};
+  if(h==="can-ky")return {kind:"list",type:"all",need:true};
+  return {kind:"home"};
+}
+let pendingHash=null;
+window.addEventListener("hashchange",()=>{
+  if(dirty&&route.kind==="form"){
+    pendingHash=location.hash;
+    history.replaceState(null,"",route.id?"#p-"+route.id:`#moi-${route.type}-${route.m}`);
+    showLeave();return;
+  }
+  go();
+});
+function go(){
+  const prev=route;route=parseHash();dirty=false;tab="form";
+  if(route.kind==="form"){
+    if(route.id){const d=docs.get(route.id);curId=route.id;cur=d?clone(d):null;lastSeen=d?.updatedAt;if(d){route.m=d.month;route.type=d.type;}}
+    else{curId=null;cur=blank(route.type,route.m);}
+  }
+  if(route.kind==="list"){fSig=route.need?"miss":(prev.kind==="form"?fSig:"");}
+  render();window.scrollTo(0,0);
+}
+function showLeave(){$("leave").hidden=false;}
+
+/* ---------- bộ lọc thời gian ---------- */
+let q="",fSig="";
+const per={mode:"month",m:thisMonth(),from:"",to:""};
+function inPeriod(r){
+  if(per.mode==="all")return true;
+  if(per.mode==="month")return r.month===per.m;
+  return (!per.from||r.date>=per.from)&&(!per.to||r.date<=per.to);
+}
+function periodLabel(){
+  if(per.mode==="all")return "toàn bộ thời gian";
+  if(per.mode==="month")return mLabel(per.m).toLowerCase();
+  if(per.from&&per.to)return `từ ${fmtD(per.from)} đến ${fmtD(per.to)}`;
+  if(per.from)return `từ ${fmtD(per.from)}`;if(per.to)return `đến ${fmtD(per.to)}`;
+  return "khoảng ngày chưa chọn";
+}
+function timeFilterHtml(){
+  const ms=months();if(!ms.includes(per.m))per.m=ms[0];
+  return `<div class="tf"><span class="flab">Thời gian</span>
+   <div class="seg" role="group" aria-label="Kiểu lọc thời gian">${[["month","Theo tháng"],["range","Khoảng ngày"],["all","Tất cả"]].map(([v,t])=>`<button type="button" data-mode="${v}" class="${per.mode===v?"on":""}" aria-pressed="${per.mode===v}">${t}</button>`).join("")}</div>
+   ${per.mode==="month"?`<select id="fMonth" aria-label="Chọn tháng">${ms.map(m=>`<option value="${m}"${m===per.m?" selected":""}>${mLabel(m)}</option>`).join("")}</select>`:""}
+   ${per.mode==="range"?`<label class="dl">Từ <input type="date" id="fFrom" value="${esc(per.from)}"></label><label class="dl">Đến <input type="date" id="fTo" value="${esc(per.to)}"></label>`:""}</div>`;
+}
+function bindTimeFilter(onChange){
+  document.querySelectorAll(".tf [data-mode]").forEach(b=>b.onclick=()=>{per.mode=b.dataset.mode;if(per.mode==="range"&&!per.from&&!per.to){per.from=per.m+"-01";per.to=new Date().toISOString().slice(0,10);}render();});
+  const fm=$("fMonth");if(fm)fm.onchange=e=>{per.m=e.target.value;render();};
+  const ff=$("fFrom"),ft=$("fTo");if(ff){ff.onchange=e=>{per.from=e.target.value;onChange();};ft.onchange=e=>{per.to=e.target.value;onChange();};}
+}
+const docIcon=(F)=>`<div class="paper" aria-hidden="true"><span class="ptab">${esc(F.short)}</span><i></i><i></i><i class="s"></i><i></i><i class="s"></i><div class="grid"><b></b><b></b><b></b><b></b><b></b><b></b></div></div>`;
+
+/* ---------- trang chủ ---------- */
+function renderHome(){
+  $("main").className="home";
+  $("main").innerHTML=`<section class="hero"><div class="wrap">
+     <p class="eyebrow">Phòng Kiểm soát chất lượng</p>
+     <h1>Phiếu đánh giá chất lượng vận hành cửa hàng</h1>
+     <p class="lead">Chọn thời gian, xem mỗi loại phiếu đã chấm được bao nhiêu cửa hàng, rồi mở danh sách để xem hoặc tạo phiếu.</p>
+     <div class="hero-filter">${timeFilterHtml()}</div><div id="status" class="status"></div></div></section>
+   <section class="wrap"><div class="sechead"><h2 id="cardsTitle"></h2><span class="sub" id="cardsSub"></span></div><div class="cards" id="cards"></div></section>`;
+  bindTimeFilter(fillHome);fillHome();
+}
+function fillHome(){
+  const recs=allRecs().filter(inPeriod);
+  $("cardsTitle").textContent="Các loại phiếu";
+  $("cardsSub").textContent=loaded?`Số liệu ${periodLabel()}`:"Đang tải phiếu…";
+  $("cards").innerHTML=TYPES.map(t=>{
+    const F=FORMS[t],l=recs.filter(r=>typeOf(r)===t),miss=l.filter(r=>r._c.ss!=="full"),late=miss.filter(r=>r._c.ss==="late");
+    const st=new Set(l.map(r=>r.store).filter(s=>STORES.includes(s))).size;
+    return `<article class="card">
+      <a class="cimg" href="#loai-${t}" tabindex="-1">${docIcon(F)}</a>
+      <div class="cbody">
+        <div class="ccode">${F.ctrl}</div>
+        <h3><a href="#loai-${t}">${esc(F.name)}</a></h3>
+        <p class="cdesc">${esc(F.desc)}</p>
+        <div class="cmeta">${F.items.length} mục chấm · ${F.ccps.length} lỗi nghiêm trọng · 100 điểm</div>
+        <div class="cnote">
+          <div class="big"><b>${l.length}</b> phiếu đã đánh giá</div>
+          <div class="cov"><span>Đã đánh giá <b>${st}/${STORES.length}</b> cửa hàng</span><div class="track"><i style="width:${st/STORES.length*100}%"></i></div></div>
+          ${miss.length?`<div class="cwarn${late.length?"":" w"}">${miss.length} phiếu chưa ký đủ${late.length?` · ${late.length} quá hạn`:""}</div>`:l.length?`<div class="cok">Tất cả phiếu đã ký đủ</div>`:`<div class="cmuted">Chưa có phiếu nào trong thời gian này</div>`}
+        </div>
+        <div class="cact"><a class="btn primary" href="#loai-${t}">Xem phiếu</a><a class="btn" href="#moi-${t}${per.mode==="month"&&per.m!==thisMonth()?"-"+per.m:""}">+ Tạo phiếu mới</a></div>
+      </div></article>`;}).join("");
+  if(offline)setStatus("Không có kho dữ liệu ở chế độ xem này: phiếu chỉ được giữ đến khi đóng trang.",true);
+}
+
+/* ---------- trang danh sách theo loại ---------- */
+function listRows(l,showType){
+  return l.map(r=>{const c=r._c;
+    const chip=c.ss==="full"?'<span class="chip c-ok">Đã ký đủ</span>':c.ss==="late"?`<span class="chip c-late">Quá hạn · ${c.nSig}/3</span>`:`<span class="chip c-wait">Chờ ký · ${c.nSig}/3</span>`;
+    return `<tr class="${c.ss==="full"?"":c.ss}" data-id="${esc(r.id)}">
+      <td class="code"><a class="rowlink" href="${pLink(esc(r.id))}" ${NEWTAB} title="Mở phiếu trong tab mới">${esc(r.code)} <span class="nt" aria-hidden="true">↗</span></a>${showType?`<div class="ar">${esc(FORMS[typeOf(r)].short)}</div>`:""}</td><td><div class="st">${esc(r.store)||"(chưa nhập cửa hàng)"}</div><div class="ar">${esc(r.area||"")}</div></td>
+      <td>${fmtD(r.date)}</td><td>${esc(r.qc)||"–"}</td>
+      <td class="num">${pctS(c.pct)}</td><td>${c.rate?`<span class="rate r-${c.rate}">${RL[c.rate]}</span>`:'<span class="rate r-none">Chưa chấm</span>'}</td>
+      <td class="num">${c.ccpN?`<span class="ccpn">${c.ccpN}</span>`:"–"}</td>
+      <td><span class="dots" aria-hidden="true">${[2,1,0].map(k=>`<i class="${(r.sig||[])[k]?"y":""}"></i>`).join("")}</span>${chip}</td></tr>`;}).join("");
+}
+function renderList(){
+  $("main").className="";
+  const all=route.type==="all",F=all?null:FORMS[route.type];
+  $("main").innerHTML=`<div class="wrap page">
+   <div class="crumb"><a href="#">Trang chủ</a><span class="meta">/ ${all?"Phiếu cần ký":esc(F.name)}</span></div>
+   <div class="top">${all?"":docIcon(F)}<div class="tt"><h1>${all?"Phiếu cần ký":esc(F.name)}</h1><div class="sub">${all?"Tất cả loại phiếu chưa đủ 3 chữ ký.":`${F.ctrl} · ${F.items.length} mục chấm · ${F.ccps.length} lỗi nghiêm trọng. ${esc(F.desc)}`}</div></div>
+     ${all?"":`<a class="btn primary" href="#moi-${F.key}${per.mode==="month"&&per.m!==thisMonth()?"-"+per.m:""}">+ Tạo phiếu mới từ mẫu</a>`}</div>
+   <div id="status" class="status"></div>
+   <div class="filters" role="search">${all?"":timeFilterHtml()}
+     <div class="tf"><span class="flab">Lọc thêm</span><input id="q" type="search" placeholder="Mã phiếu, cửa hàng, người đánh giá…" aria-label="Tìm kiếm" value="${esc(q)}">
+       <select id="fSig" aria-label="Trạng thái ký"><option value="">Mọi trạng thái ký</option><option value="miss">Chưa ký đủ</option><option value="late">Quá hạn ký</option><option value="full">Đã ký đủ</option></select></div></div>
+   <div id="res"></div></div>`;
+  $("fSig").value=fSig;
+  bindTimeFilter(fillRes);
+  $("q").oninput=e=>{q=e.target.value;fillRes();};
+  $("fSig").onchange=e=>{fSig=e.target.value;fillRes();};
+  fillRes();
+  if(offline)setStatus("Không có kho dữ liệu ở chế độ xem này: phiếu chỉ được giữ đến khi đóng trang.",true);
+}
+function fillRes(){
+  const allT=route.type==="all";
+  const base=allT?allRecs().filter(r=>r._c.ss!=="full"):allRecs().filter(r=>inPeriod(r)&&typeOf(r)===route.type);
+  const miss=base.filter(r=>r._c.ss!=="full"),late=miss.filter(r=>r._c.ss==="late");
+  const st=new Set(base.map(r=>r.store).filter(s=>STORES.includes(s))).size;
+  const ql=q.trim().toLowerCase();
+  const l=base.filter(r=>(!ql||`${r.code} ${r.store} ${r.qc} ${r.area}`.toLowerCase().includes(ql))&&(!fSig||(fSig==="miss"?r._c.ss!=="full":r._c.ss===fSig)))
+    .sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.code||"").localeCompare(a.code||""));
+  let h=`<div class="summary-line">${!loaded?"Đang tải phiếu…":allT?`<b>${base.length}</b> phiếu chưa ký đủ ở mọi thời gian, trong đó <b>${late.length}</b> quá hạn ký`:`<b>${base.length}</b> phiếu ${periodLabel()} · đã đánh giá <b>${st}/${STORES.length}</b> cửa hàng · <b>${base.length-miss.length}</b> đã ký đủ · <b>${miss.length}</b> chưa ký đủ`}</div>`;
+  if(miss.length){
+    const who=[2,1,0].map(k=>[k,miss.filter(r=>!(r.sig||[])[k]).length]).filter(x=>x[1]).map(([k,n])=>`${esc(DEF_APPR[k].name)} (${ROLES[k].slice(6)}): ${n}`).join(" · ");
+    h+=`<div class="alert${late.length?"":" w"}"><div class="txt"><b>${miss.length} phiếu chưa ký đủ${late.length?`, ${late.length} quá hạn hơn ${LATE_DAYS} ngày`:""}</b><div>Còn thiếu chữ ký – ${who}</div></div>${fSig==="miss"?"":'<button class="btn" id="showMiss" type="button">Chỉ xem các phiếu này</button>'}</div>`;
+  }
+  h+=`<div class="panel"><table class="list stack"><thead><tr><th>Mã phiếu</th><th>Cửa hàng</th><th>Ngày đánh giá</th><th>Người đánh giá</th><th class="num">% Đạt</th><th>Xếp loại</th><th class="num">Lỗi NT</th><th>Chữ ký</th></tr></thead><tbody id="rows">${listRows(l,allT)}</tbody></table>
+    <div class="empty"${l.length?" hidden":""}>${!loaded?"Đang tải phiếu…":base.length?"Không có phiếu nào khớp bộ lọc.":"Chưa có phiếu nào trong thời gian này."}</div></div>
+    <p class="note">Bấm vào một phiếu để mở phiếu trong tab mới. Phiếu chưa đủ 3 chữ ký sau ${LATE_DAYS} ngày kể từ ngày đánh giá được tính là quá hạn ký.</p>`;
+  $("res").innerHTML=h;
+  const sm=$("showMiss");if(sm)sm.onclick=()=>{fSig="miss";$("fSig").value="miss";fillRes();};
+}
+
+/* ---------- phiếu ---------- */
+function blank(type,m){
+  const t=thisMonth(),d=now();
+  return {type,code:null,month:m,store:"",area:"",date:m===t?`${m}-${p2(d.getDate())}`:`${m}-01`,from:"",to:"",qc:"",res:{},ccp:{},notes:{},note:"",appr:clone(DEF_APPR),sig:[null,null,null]};
+}
+const locked=()=>cur.sig.some(Boolean);
+function markDirty(){if(!dirty){dirty=true;}paintSave();}
+function paintSave(){
+  const s=$("saved");if(!s)return;
+  s.className="saved"+(dirty?" dirty":"");
+  s.textContent=dirty?"Có thay đổi chưa lưu":curId?"Đã lưu"+(cur.updatedAt?" lúc "+fmtDT(cur.updatedAt):""):"Phiếu mới – chưa lưu";
+  $("bSave").disabled=!dirty;
+}
+function renderForm(){
+  $("main").className="wrap page";
+  if(!cur){
+    $("main").innerHTML=`<div class="crumb"><a href="#">← Trang chủ</a></div><h1>${loaded?"Không tìm thấy phiếu":"Đang tải phiếu…"}</h1><div id="status" class="status"></div>`;
+    $("bar").hidden=true;return;
+  }
+  const lk=locked(),c=compute(cur),F=c.F;
+  const head=`<div class="crumb"><a href="#">Trang chủ</a><span class="meta">/</span><a href="#loai-${F.key}">${esc(F.name)}</a><span class="meta">/ ${cur.code?esc(cur.code):"Phiếu mới"}</span></div>
+   <h1>${cur.store?esc(cur.store):"Phiếu đánh giá mới"}</h1><div class="sub">${cur.code?esc(cur.code)+" · ":""}Ngày đánh giá ${fmtD(cur.date)}${cur.qc?" · "+esc(cur.qc):""}</div><div id="status" class="status"></div>
+   ${curId&&c.ss!=="full"?`<div class="alert${c.ss==="late"?"":" w"}"><div class="txt"><b>${c.ss==="late"?"Quá hạn ký":"Chờ ký"} · ${c.nSig}/3 chữ ký</b><div>Còn thiếu: ${[2,1,0].filter(k=>!cur.sig[k]).map(k=>esc(cur.appr[k].name)+" ("+ROLES[k].slice(6)+")").join(", ")}</div></div><button class="btn" type="button" data-tab="appr">Đến trang phê duyệt</button></div>`:""}
+   <nav class="tabs"><button class="tab${tab==="form"?" on":""}" data-tab="form" type="button">1. Phiếu đánh giá</button><button class="tab${tab==="appr"?" on":""}" data-tab="appr" type="button">2. Phê duyệt <span class="cnt${c.nSig===3?" full":""}">${c.nSig}/3</span></button></nav>`;
+  let body="";
+  if(tab==="form"){
+    body+=`<div class="doc"><h2>${F.full}</h2><div class="meta">Số kiểm soát: <b>${F.ctrl}</b> · Ngày ban hành: <b>28/06/2026</b></div>
+      <div class="info">
+        <div><label for="f-store">Cửa hàng *</label><input id="f-store" data-f="store" list="storeList" value="${esc(cur.store)}" placeholder="Chọn hoặc nhập cửa hàng" ${lk?"disabled":""}></div>
+        <div><label for="f-date">Ngày đánh giá *</label><input id="f-date" data-f="date" type="date" value="${esc(cur.date)}" ${lk?"disabled":""}></div>
+        <div><label for="f-from">Từ (giờ)</label><input id="f-from" data-f="from" type="time" value="${esc(cur.from)}" ${lk?"disabled":""}></div>
+        <div><label for="f-to">Đến (giờ)</label><input id="f-to" data-f="to" type="time" value="${esc(cur.to)}" ${lk?"disabled":""}></div>
+        <div><label for="f-qc">Người đánh giá</label><input id="f-qc" data-f="qc" value="${esc(cur.qc)}" placeholder="Họ tên QC" ${lk?"disabled":""}></div>
+      </div>
+      <div class="legend"><span>Vi phạm 1 trong các lỗi được tính <b>Không đạt</b>.</span><span><span class="tag kph">KPH</span> theo phân loại trong phiếu gốc</span><span><span class="tag crt">Lỗi nghiêm trọng</span> chấm Không đạt thì không được xếp VYC</span></div>
+      ${lk?'<div class="alert w lock"><div class="txt"><b>Phiếu đã có chữ ký nên đang khoá điểm.</b><div>Muốn sửa điểm thì những người đã ký cần huỷ chữ ký ở trang Phê duyệt.</div></div></div>':""}
+      ${lk?"":'<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" type="button" id="bAllD">Đánh dấu các mục chưa chấm là Đạt</button><button class="btn sm" type="button" id="bFold">Thu gọn / mở rộng tất cả</button></div>'}
+    </div>`;
+    let part="";
+    F.data.forEach(g=>{
+      if(g.part!==part){part=g.part;body+=`<div class="part-title">${part==="A"?"A – QUẢN LÝ CƠ SỞ VẬT CHẤT, HẠ TẦNG":"B – TIÊU CHUẨN VẬN HÀNH"}</div>`;}
+      body+=`<section class="grp" id="g-${g.id}"><div class="grp-h" data-fold="${g.id}"><h3><span class="chev">▾</span> ${g.id} – ${esc(g.name)}</h3><div class="stat" id="gs-${g.id}"></div></div><div class="grp-b">
+       <table class="items${lk?" ro":""}"><thead><tr><th>Mã</th><th>Tiêu chí đánh giá</th><th>Hướng dẫn chi tiết lỗi</th><th class="c">Điểm chuẩn</th><th class="c">Đạt</th><th class="c">Không đạt</th><th class="c">NA</th></tr></thead><tbody>`;
+      g.items.forEach(it=>{
+        body+=`<tr id="r-${it.id}"><td class="icode">${it.id}</td><td class="crit">${esc(it.name)}</td><td class="errcell"><div class="errs">${it.errs.map(e=>{const i=e.indexOf(":"),cd=e.slice(0,i),tx=e.slice(i+1),k=/-KPH/.test(cd);return `<div class="err"><b>${esc(cd.replace("-KPH",""))}</b>${k?' <span class="tag kph">KPH</span>':""} ${esc(tx.trim())}</div>`}).join("")}</div>
+          <textarea class="inote" data-note="${it.id}" rows="1" placeholder="Ghi chú / bằng chứng…" ${lk?"disabled":""}>${esc(cur.notes[it.id]||"")}</textarea></td>
+          <td class="pts">${it.pts}</td>${["D","K","NA"].map(v=>`<td class="opt o-${v}" data-it="${it.id}" data-v="${v}"><span class="box"></span></td>`).join("")}</tr>`;
+      });
+      g.ccp.forEach(([cd,t])=>{
+        body+=`<tr class="ccprow" id="r-${cd}"><td class="icode">${cd}</td><td class="crit" colspan="2"><span class="tag crt">Lỗi nghiêm trọng</span> ${esc(t)}</td><td class="pts">–</td>${["D","K","NA"].map(v=>`<td class="opt o-${v}" data-ccp="${cd}" data-v="${v}"><span class="box"></span></td>`).join("")}</tr>`;
+      });
+      body+=`</tbody></table></div></section>`;
+    });
+    body+=`<div class="doc" style="margin-top:20px"><h2>Kết quả chấm</h2><div style="overflow-x:auto"><table class="sum"><thead><tr><th>Nhóm tiêu chí</th><th>Số mục</th><th>Điểm chuẩn</th><th>Điểm đạt</th><th>Điểm không đạt</th><th>NA</th><th>% Đạt</th></tr></thead><tbody id="sumBody"></tbody></table></div>
+      <div class="scale" id="scale"><div data-r="KD"><b>KĐ</b>&lt;82% · &lt;4.1</div><div data-r="CCT"><b>CCT</b>82–&lt;85% · 4.1–&lt;4.25</div><div data-r="DAT"><b>ĐẠT</b>85–&lt;95% · 4.25–&lt;4.75</div><div data-r="VYC"><b>VYC</b>≥95% · ≥4.75, không có lỗi nghiêm trọng</div></div>
+      <div class="gen"><label class="meta" for="f-note">Nhận xét chung / yêu cầu khắc phục</label><textarea id="f-note" data-f="note" ${lk?"disabled":""}>${esc(cur.note)}</textarea></div></div>`;
+  }else{
+    body+=`<div class="doc"><h2 style="text-align:center">PHÊ DUYỆT</h2><div class="meta" style="text-align:center">${cur.code?esc(cur.code)+" · ":""}${esc(F.name)} · ${F.ctrl}</div>
+     ${curId?"":'<div class="alert w" style="margin-top:14px"><div class="txt"><b>Lưu phiếu trước khi ký.</b><div>Phiếu mới cần được lưu thì mới ký xác nhận được.</div></div></div>'}
+     <div style="overflow-x:auto"><table class="appr"><thead><tr><th></th>${ROLES.map(r=>`<th>${r}</th>`).join("")}</tr></thead><tbody>
+      <tr><td class="lbl">Họ và tên</td>${[0,1,2].map(k=>`<td><input data-ap="${k}" data-k="name" value="${esc(cur.appr[k].name)}" ${cur.sig[k]?"disabled":""}></td>`).join("")}</tr>
+      <tr><td class="lbl">Chức vụ</td>${[0,1,2].map(k=>`<td><input data-ap="${k}" data-k="title" value="${esc(cur.appr[k].title)}" ${cur.sig[k]?"disabled":""}></td>`).join("")}</tr>
+      <tr><td class="lbl">Ngày</td>${[0,1,2].map(k=>`<td><input data-ap="${k}" data-k="date" value="${esc(cur.appr[k].date)}" placeholder="dd/mm/yyyy" ${cur.sig[k]?"disabled":""}></td>`).join("")}</tr>
+      <tr class="sig"><td class="lbl">Chữ ký</td>${[0,1,2].map(k=>`<td data-r="${k}"><button type="button" class="tick${cur.sig[k]?" on":""}" data-r="${k}"><span class="tb"></span><span class="tt">${cur.sig[k]?"Đã ký":"Ký xác nhận"}</span></button>
+        <div class="sigform" hidden><input type="email" class="sigmail" placeholder="${cur.sig[k]?"Nhập email để huỷ ký":"Nhập email của bạn"}" aria-label="Email xác nhận"><div class="sigbtns"><button type="button" class="btn sm primary sok">Xác nhận</button><button type="button" class="btn sm scancel">Huỷ</button></div><div class="sigmsg"></div></div>
+        <div class="sigtime">${cur.sig[k]?"Đã xác nhận lúc "+fmtDT(cur.sig[k]):""}</div></td>`).join("")}</tr>
+     </tbody></table></div>
+     <p class="note">Thứ tự ký: người soạn thảo → người soát xét → người phê duyệt. Mỗi ô chỉ tick được khi nhập đúng email đã cài cho vị trí đó.</p></div>`;
+  }
+  if(curId&&!lk)body+=`<div style="margin-top:18px"><button class="btn danger" type="button" id="bDel">Xoá phiếu này</button></div>`;
+  $("main").innerHTML=head+body;
+  if(tab==="form"){F.items.forEach(it=>paintItem(it.id));F.ccps.forEach(x=>paintCcp(x.c));}
+  $("bar").hidden=false;calcForm();paintSave();
+  if(offline)setStatus("Không có kho dữ liệu ở chế độ xem này: phiếu chỉ được giữ đến khi đóng trang.",true);
+}
+function paintItem(id){
+  const tr=$("r-"+id);if(!tr)return;const v=cur.res[id],p=FORMS[cur.type].items.find(i=>i.id===id).pts;
+  tr.className=v?"st-"+v:"";
+  tr.querySelectorAll("td.opt").forEach(c=>{const on=c.dataset.v===v;c.classList.toggle("on",on);c.querySelector(".box").textContent=on?p:"";});
+}
+function paintCcp(cd){
+  const tr=$("r-"+cd);if(!tr)return;const v=cur.ccp[cd],sym={D:"✓",K:"✗",NA:"–"};
+  tr.className="ccprow"+(v?" st-"+v:"");
+  tr.querySelectorAll("td.opt").forEach(c=>{const on=c.dataset.v===v;c.classList.toggle("on",on);c.querySelector(".box").textContent=on?sym[v]:"";});
+}
+function calcForm(){
+  const c=compute(cur);
+  $("k-pct").textContent=pctS(c.pct);$("k-5").textContent=c.s5==null?"–":c.s5.toFixed(2);
+  const kc=$("k-ccp");kc.textContent=c.ccpN;kc.style.color=c.ccpN?"var(--bad)":"";
+  const b=$("k-rate");b.className="rate r-"+(c.rate||"none");b.textContent=c.rate?RL[c.rate]:"Chưa chấm";
+  $("k-prog").textContent=`${c.done}/${c.F.items.length} mục · ${c.ccpDone}/${c.F.ccps.length} lỗi nghiêm trọng đã chấm`;
+  $("k-fill").style.width=((c.done+c.ccpDone)/(c.F.items.length+c.F.ccps.length)*100)+"%";
+  if(tab!=="form")return;
+  c.groups.forEach(g=>{const s=$("gs-"+g.id);if(s)s.innerHTML=`<span>Đạt <b>${g.d}</b>/${g.pts-g.na}</span><span><b>${pctS(g.pct)}</b></span>`;});
+  let h=c.groups.map(g=>`<tr><td>${g.id} – ${esc(g.name)}</td><td>${g.n}</td><td>${g.pts}</td><td>${g.d}</td><td>${g.k}</td><td>${g.na}</td><td>${pctS(g.pct)}</td></tr>`).join("");
+  h+=`<tr class="total"><td>Tổng</td><td>${c.F.items.length}</td><td>${c.T.pts}</td><td>${c.T.d}</td><td>${c.T.k}</td><td>${c.T.na}</td><td>${pctS(c.pct)}</td></tr><tr class="total"><td colspan="6">Quy đổi sang thang điểm 5</td><td>${c.s5==null?"–":c.s5.toFixed(2)}</td></tr><tr><td colspan="6">Số lỗi nghiêm trọng</td><td>${c.ccpN}</td></tr>`;
+  $("sumBody").innerHTML=h;
+  document.querySelectorAll("#scale div").forEach(d=>d.classList.toggle("act",d.dataset.r===c.rate));
+}
+
+/* ---------- sự kiện trên phiếu ---------- */
+document.addEventListener("click",e=>{
+  if(route.kind!=="form"||!cur)return;
+  const t=e.target;
+  const tb=t.closest("[data-tab]");if(tb){tab=tb.dataset.tab;renderForm();window.scrollTo(0,0);return;}
+  const op=t.closest("td.opt");
+  if(op&&!locked()){
+    if(op.dataset.it){const id=op.dataset.it;cur.res[id]=cur.res[id]===op.dataset.v?undefined:op.dataset.v;if(!cur.res[id])delete cur.res[id];paintItem(id);}
+    else{const cd=op.dataset.ccp;cur.ccp[cd]=cur.ccp[cd]===op.dataset.v?undefined:op.dataset.v;if(!cur.ccp[cd])delete cur.ccp[cd];paintCcp(cd);}
+    markDirty();calcForm();return;
+  }
+  const fh=t.closest(".grp-h");if(fh){fh.parentElement.classList.toggle("collapsed");return;}
+  if(t.id==="bAllD"){const F=FORMS[cur.type];F.items.forEach(it=>{if(!cur.res[it.id]){cur.res[it.id]="D";paintItem(it.id);}});F.ccps.forEach(x=>{if(!cur.ccp[x.c]){cur.ccp[x.c]="D";paintCcp(x.c);}});markDirty();calcForm();return;}
+  if(t.id==="bFold"){const s=[...document.querySelectorAll("section.grp")];const any=s.some(x=>!x.classList.contains("collapsed"));s.forEach(x=>x.classList.toggle("collapsed",any));return;}
+  if(t.id==="bDel"){delPhieu(t);return;}
+  const td=t.closest("tr.sig td[data-r]");
+  if(td){
+    const form=td.querySelector(".sigform"),msg=td.querySelector(".sigmsg"),mail=td.querySelector(".sigmail");
+    if(t.closest(".tick")){form.hidden=false;msg.textContent="";mail.value="";mail.focus();return;}
+    if(t.closest(".scancel")){form.hidden=true;return;}
+    if(t.closest(".sok"))trySign(+td.dataset.r,td);
+  }
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&e.target.classList?.contains("sigmail")){const td=e.target.closest("td");trySign(+td.dataset.r,td);}
+});
+document.addEventListener("input",e=>{
+  if(route.kind!=="form"||!cur)return;const t=e.target;
+  if(t.dataset.f){cur[t.dataset.f]=t.value;markDirty();}
+  else if(t.dataset.note){if(t.value)cur.notes[t.dataset.note]=t.value;else delete cur.notes[t.dataset.note];markDirty();}
+  else if(t.dataset.ap){cur.appr[+t.dataset.ap][t.dataset.k]=t.value;markDirty();}
+});
+async function trySign(r,td){
+  const msg=td.querySelector(".sigmsg"),got=td.querySelector(".sigmail").value.trim().toLowerCase();
+  if(!curId){msg.textContent="Hãy lưu phiếu trước khi ký.";return;}
+  if(dirty){msg.textContent="Phiếu có thay đổi chưa lưu. Hãy lưu trước khi ký.";return;}
+  if(!got){msg.textContent="Vui lòng nhập email.";return;}
+  if(sha256(got)!==SIGN_HASH[r]){msg.textContent="Email không khớp với người ở vị trí này.";return;}
+  const sig=cur.sig.slice();sig[r]=sig[r]?null:now().toISOString();
+  const upd={sig,updatedAt:now().toISOString()};
+  try{await writeDoc(curId,upd,true);Object.assign(cur,upd);lastSeen=cur.updatedAt;renderForm();}
+  catch(err){msg.textContent="Không lưu được chữ ký ("+(err.code||"lỗi")+"). Thử lại sau.";}
+}
+async function writeDoc(id,data,isUpdate){
+  if(offline||!db){docs.set(id,{...(docs.get(id)||{}),...data});return;}
+  const ref=db.doc("phieu/"+id);
+  if(isUpdate)await ref.update(data);else await ref.set(data);
+}
+async function save(){
+  if(!cur.store.trim()||!cur.date){setStatus("Cần nhập Cửa hàng và Ngày đánh giá trước khi lưu.",true);$("f-store")?.focus();if(tab!=="form"){tab="form";renderForm();setStatus("Cần nhập Cửa hàng và Ngày đánh giá trước khi lưu.",true);}return;}
+  const b=$("bSave");b.disabled=true;b.textContent="Đang lưu…";
+  cur.month=cur.date.slice(0,7);cur.updatedAt=now().toISOString();
+  try{
+    if(!curId){
+      const yymm=cur.month.slice(2,4)+cur.month.slice(5,7);
+      const F=FORMS[cur.type];
+      const nums=allRecs().filter(r=>r.month===cur.month&&typeOf(r)===cur.type).map(r=>+(r.code||"").split("-")[2]||0);
+      cur.code=`${F.prefix}-${yymm}-${String(Math.max(0,...nums)+1).padStart(3,"0")}`;
+      cur.createdAt=cur.updatedAt;
+      const id=`${F.prefix.toLowerCase()}-${yymm}-${Date.now().toString(36)}`;
+      await writeDoc(id,clone(cur),false);
+      dirty=false;lastSeen=cur.updatedAt;location.hash="p-"+id;
+    }else{
+      const {sig,...rest}=cur;await writeDoc(curId,clone(rest),true);
+      dirty=false;lastSeen=cur.updatedAt;renderForm();renderNav();
+    }
+  }catch(err){setStatus("Không lưu được phiếu ("+(err.code||"lỗi")+"). Thử lại sau.",true);b.disabled=false;}
+  b.textContent="Lưu phiếu";
+}
+let delArmed=false;
+async function delPhieu(btn){
+  if(!delArmed){delArmed=true;btn.textContent="Bấm lần nữa để xoá vĩnh viễn";setTimeout(()=>{delArmed=false;if(btn.isConnected)btn.textContent="Xoá phiếu này";},4000);return;}
+  delArmed=false;const m=cur.month;
+  try{if(offline||!db)docs.delete(curId);else await db.doc("phieu/"+curId).delete();dirty=false;location.hash="loai-"+cur.type;}
+  catch(err){setStatus("Không xoá được phiếu ("+(err.code||"lỗi")+").",true);}
+}
+$("bSave").onclick=save;
+$("lvSave").onclick=async()=>{$("leave").hidden=true;await save();if(!dirty&&pendingHash){const h=pendingHash;pendingHash=null;location.hash=h;}};
+$("lvDrop").onclick=()=>{$("leave").hidden=true;dirty=false;const h=pendingHash;pendingHash=null;location.hash=h||"";if(location.hash===h)go();};
+$("lvStay").onclick=()=>{$("leave").hidden=true;pendingHash=null;};
+
+function render(){
+  renderNav();
+  if(route.kind==="form"){
+    if(route.id&&!cur){const d=docs.get(route.id);if(d){curId=route.id;cur=clone(d);lastSeen=d.updatedAt;route.m=d.month;route.type=d.type;}}
+    renderForm();
+  }else{$("bar").hidden=true;if(route.kind==="home")renderHome();else renderList();}
+  document.title=route.kind==="form"&&cur?.code?cur.code+" – Đánh giá vận hành":"Đánh giá vận hành cửa hàng";
+}
+$("storeList").innerHTML=STORES.map(s=>`<option value="${esc(s)}">`).join("");
+{ // mở trang: luôn vào trang chủ, trừ khi được mở từ link "xem phiếu" (tab mới)
+  const h0=location.hash.slice(1),mx=h0.match(/^xem-([a-z0-9-]+)$/);
+  try{history.replaceState(null,"",mx?"#p-"+mx[1]:location.pathname+location.search);}catch(e){if(!mx)location.hash="";}
+}
+route=parseHash();go();initDb();
+}
+
+</script>
+</body>
+</html>
